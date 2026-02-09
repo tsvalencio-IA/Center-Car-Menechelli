@@ -1,5 +1,5 @@
 /* ==================================================================
-   DASHBOARD CENTER CAR MENECHELLI - V3.5 (PREMIUM GRID)
+   DASHBOARD CENTER CAR MENECHELLI - V3.6 (STABLE & ROBUST)
    Desenvolvido por: thIAguinho Soluções
    ================================================================== */
 
@@ -14,6 +14,7 @@ const firebaseConfig = {
   appId: "1:697435506647:web:dce5cbf910f4960f732d92"
 };
 
+// Variáveis de Estado
 let activeCloudinaryConfig = null;
 let currentUser = null;
 let allServiceOrders = {};
@@ -21,31 +22,28 @@ let lightboxMedia = [];
 let currentLightboxIndex = 0;
 let filesToUpload = [];
 
-// STATUS EXATOS DO SISTEMA
+// Definição Estrita dos Status
 const STATUS_LIST = [ 
     'Aguardando-Mecanico', 'Em-Analise', 'Orcamento-Enviado', 
     'Aguardando-Aprovacao', 'Servico-Autorizado', 'Em-Execucao', 
     'Finalizado-Aguardando-Retirada', 'Entregue' 
 ];
 
-// --- SISTEMA DE NOTIFICAÇÕES (Toast) ---
+// --- TOAST NOTIFICATIONS (UI FEEDBACK) ---
 function showNotification(message, type = 'success') {
   const div = document.createElement('div');
   div.className = `notification ${type}`;
   div.innerHTML = `<i class='bx ${type === 'success' ? 'bx-check-circle' : 'bx-error-circle'} text-xl'></i> <span class="font-bold text-sm">${message}</span>`;
   document.body.appendChild(div);
   
-  // Animação entrada
   requestAnimationFrame(() => div.classList.add('show'));
-  
-  // Remoção automática
   setTimeout(() => {
       div.classList.remove('show');
       setTimeout(() => div.remove(), 300);
   }, 4000);
 }
 
-// --- UPLOAD CLOUDINARY ---
+// --- CLOUDINARY SERVICE ---
 const uploadFileToCloudinary = async (file) => {
   if (!activeCloudinaryConfig) throw new Error('Mídia não configurada no Admin.');
   
@@ -57,73 +55,100 @@ const uploadFileToCloudinary = async (file) => {
       method: 'POST', body: formData
   });
   
-  if (!res.ok) throw new Error('Erro ao enviar imagem.');
+  if (!res.ok) throw new Error('Erro ao enviar imagem. Verifique a conexão.');
   const data = await res.json();
   return { url: data.secure_url, type: data.resource_type };
 };
 
-// --- INIT ---
+// --- INIT APP ---
 document.addEventListener('DOMContentLoaded', () => {
-  firebase.initializeApp(firebaseConfig);
+  // Inicializa Firebase com tratamento de erro básico
+  try {
+      firebase.initializeApp(firebaseConfig);
+  } catch(e) {
+      console.error("Erro ao inicializar Firebase:", e);
+      return;
+  }
+  
   const db = firebase.database();
 
-  // 1. CARREGAR USUÁRIOS
+  // 1. CARREGAMENTO DE USUÁRIOS
   db.ref('users').on('value', snap => {
       const data = snap.val();
       const select = document.getElementById('userSelect');
-      select.innerHTML = '<option value="">Selecione...</option>';
-      const allUsers = [];
+      if(!select) return; // Guard clause se não estiver na tela de login
 
+      select.innerHTML = '<option value="">Selecione...</option>';
+      
       if (data) {
           Object.entries(data).forEach(([key, user]) => {
-              user.id = key;
-              allUsers.push(user);
+              // Sanitização básica
+              if (!user.name) return;
+              
               const opt = document.createElement('option');
-              opt.value = JSON.stringify({id: key, name: user.name, role: user.role, password: user.password});
+              // Salvamos o objeto user inteiro como string para facilitar o login
+              opt.value = JSON.stringify({id: key, name: user.name, role: user.role || 'Colaborador', password: user.password});
               opt.textContent = user.name;
               select.appendChild(opt);
           });
       }
   });
 
-  // 2. CARREGAR CONFIG DE MÍDIA
+  // 2. CONFIGURAÇÃO DE MÍDIA
   db.ref('cloudinaryConfigs').limitToLast(1).on('value', snap => {
       const val = snap.val();
       if(val) activeCloudinaryConfig = Object.values(val)[0];
   });
 
-  // 3. LOGIN
-  document.getElementById('loginForm').onsubmit = (e) => {
-      e.preventDefault();
-      const selectVal = document.getElementById('userSelect').value;
-      const pass = document.getElementById('passwordInput').value;
-      
-      if(!selectVal) return;
-      const user = JSON.parse(selectVal);
-
-      if (user.password === pass) {
-          currentUser = user;
-          document.getElementById('userScreen').classList.add('hidden');
-          document.getElementById('app').classList.remove('hidden');
-          document.getElementById('app').classList.add('flex');
-          document.getElementById('currentUserName').textContent = user.name.split(' ')[0];
+  // 3. LOGIN HANDLER
+  const loginForm = document.getElementById('loginForm');
+  if(loginForm) {
+      loginForm.onsubmit = (e) => {
+          e.preventDefault();
+          const selectVal = document.getElementById('userSelect').value;
+          const pass = document.getElementById('passwordInput').value;
           
-          if(user.role === 'Gestor' || user.name.includes('Thiago')) {
-              document.getElementById('adminBtn').classList.remove('hidden');
-              document.getElementById('reportsBtn').classList.remove('hidden');
-              document.getElementById('adminZone').classList.remove('hidden');
+          if(!selectVal) {
+              document.getElementById('loginError').textContent = "Selecione um usuário.";
+              return;
           }
           
-          initKanban();
-          listenOS();
-      } else {
-          document.getElementById('loginError').textContent = "SENHA INCORRETA";
-      }
-  };
+          try {
+              const user = JSON.parse(selectVal);
+              if (user.password === pass) {
+                  currentUser = user;
+                  document.getElementById('userScreen').classList.add('hidden');
+                  document.getElementById('app').classList.remove('hidden');
+                  document.getElementById('app').classList.add('flex');
+                  document.getElementById('currentUserName').textContent = user.name.split(' ')[0];
+                  
+                  // Permissões de Admin
+                  if(user.role === 'Gestor' || user.name.includes('Thiago')) {
+                      const adminBtn = document.getElementById('adminBtn');
+                      const reportsBtn = document.getElementById('reportsBtn');
+                      const adminZone = document.getElementById('adminZone');
+                      if(adminBtn) adminBtn.classList.remove('hidden');
+                      if(reportsBtn) reportsBtn.classList.remove('hidden');
+                      if(adminZone) adminZone.classList.remove('hidden');
+                  }
+                  
+                  initKanban();
+                  listenOS();
+              } else {
+                  document.getElementById('loginError').textContent = "SENHA INCORRETA";
+              }
+          } catch (err) {
+              console.error("Erro no login:", err);
+              document.getElementById('loginError').textContent = "Erro ao processar login.";
+          }
+      };
+  }
 
-  // 4. KANBAN (GRID SYSTEM)
+  // 4. KANBAN RENDERER
   const initKanban = () => {
       const board = document.getElementById('kanbanBoard');
+      if(!board) return;
+
       board.innerHTML = STATUS_LIST.map(status => `
         <div class="status-column">
             <div class="column-header">
@@ -135,119 +160,141 @@ document.addEventListener('DOMContentLoaded', () => {
       `).join('');
   };
 
-  // 5. ESCUTAR OS (REALTIME)
+  // 5. CORE LOGIC: LISTENERS REALTIME
   const listenOS = () => {
       db.ref('serviceOrders').on('value', snap => {
           const data = snap.val() || {};
           allServiceOrders = data;
           
-          // Limpa colunas
+          // Limpeza segura
           STATUS_LIST.forEach(s => {
-              document.getElementById(`col-${s}`).innerHTML = '';
-              document.getElementById(`count-${s}`).innerText = '0';
+              const col = document.getElementById(`col-${s}`);
+              const count = document.getElementById(`count-${s}`);
+              if(col) col.innerHTML = '';
+              if(count) count.innerText = '0';
           });
 
-          // Popula colunas
+          // População segura
           Object.entries(data).forEach(([id, os]) => {
+              if(!os.status) return; // Ignora dados corrompidos
               os.id = id;
               const col = document.getElementById(`col-${os.status}`);
               if(col) col.innerHTML += createCard(os);
           });
 
-          // Atualiza contadores
+          // Atualização de contadores
           STATUS_LIST.forEach(s => {
-              const el = document.getElementById(`count-${s}`);
-              if(el) el.innerText = document.getElementById(`col-${s}`).children.length;
+              const col = document.getElementById(`col-${s}`);
+              const count = document.getElementById(`count-${s}`);
+              if(col && count) count.innerText = col.children.length;
           });
           
           updateAlerts();
           
-          // Atualiza modal se aberto
-          const openLogId = document.getElementById('logOsId').value;
-          if(openLogId && allServiceOrders[openLogId] && !document.getElementById('detailsModal').classList.contains('hidden')) {
-              renderTimeline(allServiceOrders[openLogId]);
-              renderGallery(allServiceOrders[openLogId]);
+          // Atualiza modal se estiver aberto e focado na OS que mudou
+          const modal = document.getElementById('detailsModal');
+          const openLogId = document.getElementById('logOsId');
+          
+          if(modal && !modal.classList.contains('hidden') && openLogId && openLogId.value) {
+              const currentOs = allServiceOrders[openLogId.value];
+              if(currentOs) {
+                  renderTimeline(currentOs);
+                  renderGallery(currentOs);
+              }
           }
       });
   };
 
   const createCard = (os) => {
-      // Prioridade Visual
+      // Tratamento de dados nulos
+      const placa = os.placa || 'SEM PLACA';
+      const modelo = os.modelo || 'Desconhecido';
+      const cliente = os.cliente || 'Anônimo';
+      const km = os.km ? os.km + ' km' : '';
+      
       let prioDot = '';
       if(os.priority === 'verde') prioDot = '<span class="priority-dot bg-prio-verde" title="Normal"></span>';
       if(os.priority === 'amarelo') prioDot = '<span class="priority-dot bg-prio-amarelo" title="Atenção"></span>';
       if(os.priority === 'vermelho') prioDot = '<span class="priority-dot bg-prio-vermelho" title="Urgente"></span>';
 
       return `
-      <div class="vehicle-card status-${os.status}" onclick="openDetails('${os.id}')">
+      <div class="vehicle-card status-${os.status}" onclick="window.openDetails('${os.id}')">
           <div class="flex justify-between items-start mb-1">
-              <div class="font-black text-slate-800 text-lg leading-none">${prioDot} ${os.placa}</div>
+              <div class="font-black text-slate-800 text-lg leading-none">${prioDot} ${placa}</div>
               ${os.priority === 'vermelho' ? '<i class="bx bxs-hot text-red-500 animate-pulse"></i>' : ''}
           </div>
-          <div class="text-xs font-bold text-blue-700 uppercase mb-2 truncate">${os.modelo}</div>
+          <div class="text-xs font-bold text-blue-700 uppercase mb-2 truncate">${modelo}</div>
           <div class="border-t border-dashed border-gray-200 pt-2 flex justify-between items-center text-[10px] text-gray-500 font-medium">
-             <span class="flex items-center gap-1"><i class='bx bxs-user'></i> ${os.cliente.split(' ')[0]}</span>
-             <span>${os.km ? os.km + ' km' : ''}</span>
+             <span class="flex items-center gap-1 truncate max-w-[60%]"><i class='bx bxs-user'></i> ${cliente.split(' ')[0]}</span>
+             <span>${km}</span>
           </div>
       </div>`;
   };
 
-  // 6. DETALHES & LÓGICA
+  // 6. DETALHES & MODAIS
   window.openDetails = (id) => {
       const os = allServiceOrders[id];
       if(!os) return;
       
       document.getElementById('logOsId').value = id;
-      document.getElementById('modalTitlePlaca').textContent = os.placa;
-      document.getElementById('modalTitleModelo').textContent = `${os.modelo} • ${os.cliente}`;
+      document.getElementById('modalTitlePlaca').textContent = os.placa || '---';
+      document.getElementById('modalTitleModelo').textContent = `${os.modelo || ''} • ${os.cliente || ''}`;
       
-      // Reseta forms
       document.getElementById('logForm').reset();
-      document.getElementById('fileName').innerText = '';
+      const fileNameDisplay = document.getElementById('fileName');
+      if(fileNameDisplay) fileNameDisplay.innerText = '';
       filesToUpload = [];
-      document.getElementById('post-log-actions').classList.add('hidden');
       
-      // Info Card
-      document.getElementById('detailsInfoContent').innerHTML = `
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm mb-4">
-              <div><p class="text-xs text-slate-400 uppercase font-bold">Telefone</p><p class="font-bold text-slate-700">${os.telefone || '-'}</p></div>
-              <div><p class="text-xs text-slate-400 uppercase font-bold">KM Atual</p><p class="font-bold text-slate-700">${os.km || '-'}</p></div>
-              <div><p class="text-xs text-slate-400 uppercase font-bold">Consultor</p><p class="font-bold text-slate-700">${os.responsible || '-'}</p></div>
-              <div><p class="text-xs text-slate-400 uppercase font-bold">Entrada</p><p class="font-bold text-slate-700">${new Date(os.createdAt).toLocaleDateString('pt-BR')}</p></div>
-          </div>
-          ${os.observacoes ? `
-          <div class="bg-red-50 border-l-4 border-red-400 p-3 rounded text-sm text-red-800">
-              <span class="font-bold block text-xs uppercase mb-1">Queixa do Cliente:</span>
-              ${os.observacoes}
-          </div>` : ''}
-      `;
+      const postActions = document.getElementById('post-log-actions');
+      if(postActions) postActions.classList.add('hidden');
+      
+      // Info Card com tratamento de nulos
+      const infoContent = document.getElementById('detailsInfoContent');
+      if(infoContent) {
+          infoContent.innerHTML = `
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm mb-4">
+                  <div><p class="text-xs text-slate-400 uppercase font-bold">Telefone</p><p class="font-bold text-slate-700">${os.telefone || '-'}</p></div>
+                  <div><p class="text-xs text-slate-400 uppercase font-bold">KM Atual</p><p class="font-bold text-slate-700">${os.km || '-'}</p></div>
+                  <div><p class="text-xs text-slate-400 uppercase font-bold">Consultor</p><p class="font-bold text-slate-700">${os.responsible || '-'}</p></div>
+                  <div><p class="text-xs text-slate-400 uppercase font-bold">Entrada</p><p class="font-bold text-slate-700">${new Date(os.createdAt).toLocaleDateString('pt-BR')}</p></div>
+              </div>
+              ${os.observacoes ? `
+              <div class="bg-red-50 border-l-4 border-red-400 p-3 rounded text-sm text-red-800">
+                  <span class="font-bold block text-xs uppercase mb-1">Queixa do Cliente:</span>
+                  ${os.observacoes}
+              </div>` : ''}
+          `;
+      }
 
       // Configurar Botão Excluir
       const delBtn = document.getElementById('deleteOsBtn');
-      delBtn.onclick = () => {
-          document.getElementById('confirmDeleteText').innerHTML = `Apagar ficha de <strong>${os.placa}</strong>?`;
-          document.getElementById('confirmDeleteBtn').onclick = async () => {
-              await db.ref(`serviceOrders/${id}`).remove();
-              document.getElementById('confirmDeleteModal').classList.add('hidden');
-              document.getElementById('detailsModal').classList.add('hidden');
-              showNotification('Ficha excluída.');
+      if(delBtn) {
+          delBtn.onclick = () => {
+              document.getElementById('confirmDeleteText').innerHTML = `Apagar ficha de <strong>${os.placa}</strong>?`;
+              document.getElementById('confirmDeleteBtn').onclick = async () => {
+                  await db.ref(`serviceOrders/${id}`).remove();
+                  document.getElementById('confirmDeleteModal').classList.add('hidden');
+                  document.getElementById('detailsModal').classList.add('hidden');
+                  showNotification('Ficha excluída.');
+              };
+              document.getElementById('confirmDeleteModal').classList.remove('hidden');
           };
-          document.getElementById('confirmDeleteModal').classList.remove('hidden');
-      };
+      }
 
-      // Configurar Impressão (AÇÃO CORRIGIDA)
-      document.getElementById('exportOsBtn').onclick = () => printOS(os);
+      const exportBtn = document.getElementById('exportOsBtn');
+      if(exportBtn) exportBtn.onclick = () => printOS(os);
 
       renderTimeline(os);
       renderGallery(os);
-      document.getElementById('detailsModal').classList.remove('hidden');
+      
+      const modal = document.getElementById('detailsModal');
+      if(modal) modal.classList.remove('hidden');
   };
 
-  // --- IMPRESSÃO PERFEITA (PADRÃO CHEVRON/MENECHELLI) ---
+  // --- IMPRESSÃO ---
   const printOS = (os) => {
       const logs = os.logs ? Object.values(os.logs).sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp)) : [];
       let totalPecas = 0;
-      let totalServicos = 0; // Se tivesse campo separado, mas vamos somar tudo no valor
 
       const linhasTabela = logs.map(log => {
           const valor = log.value ? parseFloat(log.value) : 0;
@@ -262,7 +309,11 @@ document.addEventListener('DOMContentLoaded', () => {
           </tr>`;
       }).join('');
 
-      const midia = os.media ? Object.values(os.media).filter(m => m.type.includes('image')).slice(0, 6) : []; // Max 6 fotos no print
+      const midia = os.media ? Object.values(os.media).filter(m => {
+          // Check defensivo para tipo
+          return m && ( (m.type && m.type.includes('image')) || (m.url && m.url.match(/\.(jpeg|jpg|png)$/i)) );
+      }).slice(0, 6) : []; 
+
       const fotosHtml = midia.length ? `
           <div class="section">
               <h3>Registro Fotográfico</h3>
@@ -299,20 +350,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 <h1>Center Car Menechelli</h1>
                 <p>Relatório Técnico de Serviço • Emitido em ${new Date().toLocaleString('pt-BR')}</p>
             </div>
-
             <div class="box">
                 <div class="info-grid">
                     <div><strong>Placa:</strong> ${os.placa}</div>
-                    <div><strong>Modelo:</strong> ${os.modelo}</div>
+                    <div><strong>Modelo:</strong> ${os.modelo || '-'}</div>
                     <div><strong>KM:</strong> ${os.km || '-'}</div>
-                    <div><strong>Cliente:</strong> ${os.cliente}</div>
+                    <div><strong>Cliente:</strong> ${os.cliente || '-'}</div>
                     <div><strong>Tel:</strong> ${os.telefone || '-'}</div>
-                    <div><strong>Consultor:</strong> ${os.responsible}</div>
+                    <div><strong>Consultor:</strong> ${os.responsible || '-'}</div>
                 </div>
             </div>
-
             ${os.observacoes ? `<div class="box"><h3>Reclamação Inicial</h3><p>${os.observacoes}</p></div>` : ''}
-
             <div class="box">
                 <h3>Histórico de Serviços</h3>
                 <table>
@@ -321,14 +369,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 </table>
                 <div class="total">Total Estimado: R$ ${totalPecas.toFixed(2)}</div>
             </div>
-
             ${fotosHtml}
-
             <div class="footer">
                 <p>Este documento é um registro interno de acompanhamento.</p>
                 <p>Sistema Desenvolvido por thIAguinho Soluções</p>
             </div>
-            
             <script>window.print();</script>
         </body>
         </html>
@@ -339,6 +384,7 @@ document.addEventListener('DOMContentLoaded', () => {
       win.document.close();
   };
 
+  // --- TIMELINE ---
   const renderTimeline = (os) => {
       const container = document.getElementById('timelineContainer');
       if (!os.logs) { container.innerHTML = '<p class="text-slate-400 text-center text-xs py-4">Nenhum histórico.</p>'; return; }
@@ -356,27 +402,43 @@ document.addEventListener('DOMContentLoaded', () => {
                   ${log.description}
                   ${log.parts ? `<div class="mt-2 pt-2 border-t border-slate-200 text-xs font-medium text-slate-600 flex justify-between"><span>🔧 ${log.parts}</span> <span class="text-green-600 font-bold">R$ ${log.value}</span></div>` : ''}
               </div>
-              ${currentUser.role === 'Gestor' ? `<button onclick="deleteLog('${os.id}','${key}')" class="text-[10px] text-red-300 hover:text-red-500 mt-1">Excluir</button>` : ''}
+              ${currentUser && currentUser.role === 'Gestor' ? `<button onclick="deleteLog('${os.id}','${key}')" class="text-[10px] text-red-300 hover:text-red-500 mt-1">Excluir</button>` : ''}
           </div>
       `).join('');
   };
 
   window.deleteLog = (osId, key) => { if(confirm('Excluir log?')) db.ref(`serviceOrders/${osId}/logs/${key}`).remove(); };
 
+  // --- GALERIA BLINDADA (CORREÇÃO DO BUG DO INCLUDE) ---
   const renderGallery = (os) => {
       const grid = document.getElementById('thumbnail-grid');
       if(!os.media) { grid.innerHTML = '<p class="col-span-full text-center text-slate-400 text-xs py-2">Sem fotos.</p>'; return; }
       
       const midia = Object.entries(os.media);
-      lightboxMedia = midia.map(m => m[1]); // array de objetos url/type
+      lightboxMedia = midia.map(m => m[1]); 
 
-      grid.innerHTML = midia.map(([key, m], idx) => `
-          <div class="aspect-square bg-slate-100 rounded-lg overflow-hidden relative group border border-slate-200 cursor-pointer" onclick="openLightbox(${idx})">
-              ${m.type.includes('video') ? '<div class="absolute inset-0 flex items-center justify-center text-blue-500 text-3xl"><i class="bx bx-play-circle"></i></div>' : `<img src="${m.url}" class="w-full h-full object-cover">`}
-              
-              ${currentUser.role === 'Gestor' ? `<button onclick="event.stopPropagation(); deleteMedia('${os.id}','${key}')" class="absolute top-1 right-1 bg-red-600 text-white w-6 h-6 rounded-full opacity-0 group-hover:opacity-100 transition flex items-center justify-center shadow">&times;</button>` : ''}
+      grid.innerHTML = midia.map(([key, m], idx) => {
+          // CORREÇÃO CRÍTICA: Garante que m e m.type existam antes de usar .includes
+          // Se m.type não existir (banco legado), assume string vazia para não quebrar
+          const fileType = (m && m.type) ? m.type : '';
+          const fileUrl = (m && m.url) ? m.url : '';
+          
+          // Verifica se é vídeo pelo type OU pela extensão da URL (fallback)
+          const isVideo = fileType.includes('video') || fileUrl.match(/\.(mp4|webm|ogg)$/i);
+          const isPdf = fileType.includes('pdf') || fileUrl.match(/\.pdf$/i);
+
+          let content = `<img src="${fileUrl}" class="w-full h-full object-cover">`;
+          if(isVideo) content = '<div class="absolute inset-0 flex items-center justify-center text-blue-500 text-3xl"><i class="bx bx-play-circle"></i></div>';
+          if(isPdf) content = '<div class="absolute inset-0 flex items-center justify-center text-red-500 text-3xl"><i class="bx bxs-file-pdf"></i></div>';
+
+          const canDelete = currentUser && (currentUser.role === 'Gestor' || currentUser.name.includes('Thiago'));
+
+          return `
+          <div class="aspect-square bg-slate-100 rounded-lg overflow-hidden relative group border border-slate-200 cursor-pointer" onclick="window.openLightbox(${idx})">
+              ${content}
+              ${canDelete ? `<button onclick="event.stopPropagation(); deleteMedia('${os.id}','${key}')" class="absolute top-1 right-1 bg-red-600 text-white w-6 h-6 rounded-full opacity-0 group-hover:opacity-100 transition flex items-center justify-center shadow">&times;</button>` : ''}
           </div>
-      `).join('');
+      `}).join('');
   };
 
   window.deleteMedia = (osId, key) => { if(confirm('Apagar imagem?')) db.ref(`serviceOrders/${osId}/media/${key}`).remove(); };
@@ -384,61 +446,88 @@ document.addEventListener('DOMContentLoaded', () => {
   window.openLightbox = (idx) => {
       currentLightboxIndex = idx;
       const m = lightboxMedia[idx];
+      // Defensive Check
+      if(!m || !m.url) return;
+
       const content = document.getElementById('lightbox-content');
+      const fileType = m.type || '';
       
-      if(m.type.includes('image')) content.innerHTML = `<img src="${m.url}" class="max-w-full max-h-full object-contain rounded shadow-2xl">`;
-      else if(m.type.includes('video')) content.innerHTML = `<video src="${m.url}" controls autoplay class="max-w-full max-h-full rounded shadow-2xl"></video>`;
-      else window.open(m.url);
+      if(fileType.includes('image') || m.url.match(/\.(jpeg|jpg|gif|png|webp)$/i)) {
+          content.innerHTML = `<img src="${m.url}" class="max-w-full max-h-full object-contain rounded shadow-2xl">`;
+      }
+      else if(fileType.includes('video') || m.url.match(/\.(mp4|webm)$/i)) {
+          content.innerHTML = `<video src="${m.url}" controls autoplay class="max-w-full max-h-full rounded shadow-2xl"></video>`;
+      }
+      else {
+          window.open(m.url); // PDF ou outros
+          return;
+      }
 
-      document.getElementById('lightbox-download').href = m.url;
-      document.getElementById('lightbox').classList.remove('hidden');
-      document.getElementById('lightbox').classList.add('flex');
-  };
-
-  // --- LOGIC FORM ---
-  document.getElementById('logForm').onsubmit = async (e) => {
-      e.preventDefault();
-      const btn = e.target.querySelector('button[type="submit"]');
-      const originalText = btn.innerHTML;
-      btn.disabled = true; btn.innerHTML = 'Salvando...';
+      const dlBtn = document.getElementById('lightbox-download');
+      if(dlBtn) dlBtn.href = m.url;
       
-      const osId = document.getElementById('logOsId').value;
-      
-      try {
-          if(filesToUpload.length) {
-              const res = await Promise.all(filesToUpload.map(f => uploadFileToCloudinary(f)));
-              res.forEach(r => db.ref(`serviceOrders/${osId}/media`).push(r));
-          }
-          
-          if(document.getElementById('logDescricao').value) {
-              await db.ref(`serviceOrders/${osId}/logs`).push({
-                  user: currentUser.name,
-                  timestamp: new Date().toISOString(),
-                  description: document.getElementById('logDescricao').value,
-                  parts: document.getElementById('logPecas').value,
-                  value: document.getElementById('logValor').value
-              });
-          }
-          
-          showNotification('Atualizado!');
-          e.target.reset();
-          filesToUpload = []; 
-          document.getElementById('fileName').innerText = '';
-          
-          // Mostrar Mover
-          document.getElementById('post-log-actions').classList.remove('hidden');
-          
-      } catch(err) {
-          showNotification(err.message, 'error');
-      } finally {
-          btn.disabled = false; btn.innerHTML = originalText;
+      const lb = document.getElementById('lightbox');
+      if(lb) {
+          lb.classList.remove('hidden');
+          lb.classList.add('flex');
       }
   };
 
-  // --- MOVIMENTAÇÃO RÁPIDA ---
+  // --- ACTIONS ---
+  const logForm = document.getElementById('logForm');
+  if(logForm) {
+      logForm.onsubmit = async (e) => {
+          e.preventDefault();
+          const btn = e.target.querySelector('button[type="submit"]');
+          const originalText = btn.innerHTML;
+          btn.disabled = true; btn.innerHTML = 'Salvando...';
+          
+          const osId = document.getElementById('logOsId').value;
+          
+          try {
+              if(filesToUpload.length) {
+                  const res = await Promise.all(filesToUpload.map(f => uploadFileToCloudinary(f)));
+                  res.forEach(r => db.ref(`serviceOrders/${osId}/media`).push(r));
+              }
+              
+              const desc = document.getElementById('logDescricao').value;
+              const parts = document.getElementById('logPecas').value;
+              const val = document.getElementById('logValor').value;
+
+              if(desc || parts || val) {
+                  await db.ref(`serviceOrders/${osId}/logs`).push({
+                      user: currentUser.name,
+                      timestamp: new Date().toISOString(),
+                      description: desc,
+                      parts: parts,
+                      value: val
+                  });
+              }
+              
+              showNotification('Atualizado!');
+              e.target.reset();
+              filesToUpload = []; 
+              const fn = document.getElementById('fileName');
+              if(fn) fn.innerText = '';
+              
+              // Fluxo de Movimentação
+              const actions = document.getElementById('post-log-actions');
+              if(actions) actions.classList.remove('hidden');
+              
+          } catch(err) {
+              showNotification(err.message, 'error');
+          } finally {
+              btn.disabled = false; btn.innerHTML = originalText;
+          }
+      };
+  }
+
+  // Movimentação
   const moveStatus = (dir) => {
       const id = document.getElementById('logOsId').value;
       const os = allServiceOrders[id];
+      if(!os) return;
+
       const idx = STATUS_LIST.indexOf(os.status);
       let newStatus = null;
       
@@ -447,8 +536,6 @@ document.addEventListener('DOMContentLoaded', () => {
       
       if(newStatus) {
           db.ref(`serviceOrders/${id}`).update({status: newStatus, lastUpdate: new Date().toISOString()});
-          
-          // Log automático de movimento
           db.ref(`serviceOrders/${id}/logs`).push({
               user: 'SISTEMA',
               timestamp: new Date().toISOString(),
@@ -457,15 +544,20 @@ document.addEventListener('DOMContentLoaded', () => {
           });
           
           showNotification('Veículo movido!');
-          document.getElementById('detailsModal').classList.add('hidden');
+          const modal = document.getElementById('detailsModal');
+          if(modal) modal.classList.add('hidden');
       }
   };
   
-  document.getElementById('btn-move-next').onclick = () => moveStatus('next');
-  document.getElementById('btn-move-prev').onclick = () => moveStatus('prev');
-  document.getElementById('btn-stay').onclick = () => document.getElementById('post-log-actions').classList.add('hidden');
+  const btnNext = document.getElementById('btn-move-next');
+  const btnPrev = document.getElementById('btn-move-prev');
+  const btnStay = document.getElementById('btn-stay');
+  
+  if(btnNext) btnNext.onclick = () => moveStatus('next');
+  if(btnPrev) btnPrev.onclick = () => moveStatus('prev');
+  if(btnStay) btnStay.onclick = () => document.getElementById('post-log-actions').classList.add('hidden');
 
-  // --- ALERTA PAINEL ---
+  // --- ALERTA LED ---
   const updateAlerts = () => {
       const alertPanel = document.getElementById('attention-panel');
       const container = document.getElementById('attention-panel-container');
@@ -475,110 +567,145 @@ document.addEventListener('DOMContentLoaded', () => {
           o.status === 'Aguardando-Mecanico' || o.status === 'Servico-Autorizado'
       );
       
-      if(alerts.length > 0) {
-          led.classList.remove('hidden');
-          led.classList.add('animate-ping');
-      } else {
-          led.classList.add('hidden');
+      if(led) {
+          if(alerts.length > 0) {
+              led.classList.remove('hidden');
+              led.classList.add('animate-ping');
+          } else {
+              led.classList.add('hidden');
+          }
       }
       
-      alertPanel.innerHTML = alerts.map(o => `
-          <div class="bg-slate-700 p-3 rounded border-l-4 ${o.status.includes('Mecanico') ? 'border-yellow-500' : 'border-green-500'} cursor-pointer hover:bg-slate-600 transition" onclick="openDetails('${o.id}')">
-              <p class="text-[10px] font-bold text-white uppercase opacity-70">${o.status.replace(/-/g,' ')}</p>
-              <div class="flex justify-between items-center text-white font-bold">
-                  <span>${o.placa}</span> <span class="text-xs font-normal opacity-50">${o.modelo}</span>
-              </div>
-          </div>
-      `).join('');
-  };
-  
-  document.getElementById('toggle-panel-btn').onclick = () => {
-      const c = document.getElementById('attention-panel-container');
-      c.style.maxHeight = c.style.maxHeight === '0px' || c.style.maxHeight === '' ? '300px' : '0px';
-  };
-
-  // --- MEDIA INPUTS ---
-  const fileInp = document.getElementById('media-input');
-  fileInp.onchange = (e) => {
-      if(e.target.files.length) {
-          filesToUpload = Array.from(e.target.files);
-          document.getElementById('fileName').innerText = `${filesToUpload.length} arquivo(s) selecionado(s)`;
-      }
-  };
-  document.getElementById('openCameraBtn').onclick = () => { fileInp.setAttribute('capture','environment'); fileInp.click(); };
-  document.getElementById('openGalleryBtn').onclick = () => { fileInp.removeAttribute('capture'); fileInp.click(); };
-
-  // --- MODAL UTILS ---
-  document.querySelectorAll('.btn-close-modal').forEach(b => b.onclick = (e) => {
-      e.target.closest('.modal').classList.add('hidden');
-      document.getElementById('lightbox').classList.add('hidden'); // Fecha lightbox tb se for o botão de lá
-  });
-  
-  document.getElementById('lightbox-close').onclick = () => document.getElementById('lightbox').classList.add('hidden');
-  document.getElementById('lightbox-next').onclick = () => { if(currentLightboxIndex < lightboxMedia.length-1) openLightbox(currentLightboxIndex+1); };
-  document.getElementById('lightbox-prev').onclick = () => { if(currentLightboxIndex > 0) openLightbox(currentLightboxIndex-1); };
-  
-  // --- NOVA OS E FILTROS ---
-  document.getElementById('addOSBtn').onclick = () => {
-      document.getElementById('osForm').reset();
-      const sel = document.getElementById('osResponsavel');
-      // Re-popula select de usuários
-      const userSelectLogin = document.getElementById('userSelect');
-      sel.innerHTML = userSelectLogin.innerHTML;
-      document.getElementById('osModal').classList.remove('hidden');
-      document.getElementById('osModal').classList.add('flex');
-  };
-  
-  document.getElementById('osForm').onsubmit = (e) => {
-      e.preventDefault();
-      const prio = document.querySelector('input[name="osPrioridade"]:checked').value;
-      const respJson = document.getElementById('osResponsavel').value;
-      const respName = respJson ? JSON.parse(respJson).name : 'Não Atribuído';
-
-      const newOS = {
-          placa: document.getElementById('osPlaca').value.toUpperCase(),
-          modelo: document.getElementById('osModelo').value,
-          cliente: document.getElementById('osCliente').value,
-          telefone: document.getElementById('osTelefone').value,
-          km: document.getElementById('osKm').value,
-          responsible: respName,
-          observacoes: document.getElementById('osObservacoes').value,
-          priority: prio,
-          status: 'Aguardando-Mecanico',
-          createdAt: new Date().toISOString()
-      };
-      
-      db.ref('serviceOrders').push(newOS);
-      document.getElementById('osModal').classList.add('hidden');
-      showNotification('Nova Ficha Criada!');
-  };
-
-  document.getElementById('globalSearchInput').oninput = (e) => {
-      const term = e.target.value.toUpperCase();
-      const res = document.getElementById('globalSearchResults');
-      
-      if(term.length < 2) { res.classList.add('hidden'); return; }
-      
-      const found = Object.values(allServiceOrders).filter(o => 
-          o.placa.includes(term) || o.cliente.toUpperCase().includes(term) || o.modelo.toUpperCase().includes(term)
-      );
-      
-      if(found.length) {
-          res.innerHTML = found.map(o => `
-              <div class="p-3 hover:bg-slate-50 cursor-pointer border-b last:border-0 flex justify-between items-center" onclick="openDetails('${o.id}'); document.getElementById('globalSearchResults').classList.add('hidden')">
-                  <div>
-                      <p class="font-bold text-slate-800">${o.placa}</p>
-                      <p class="text-xs text-slate-500">${o.modelo} • ${o.cliente}</p>
+      if(alertPanel) {
+          alertPanel.innerHTML = alerts.map(o => `
+              <div class="bg-slate-700 p-3 rounded border-l-4 ${o.status.includes('Mecanico') ? 'border-yellow-500' : 'border-green-500'} cursor-pointer hover:bg-slate-600 transition" onclick="window.openDetails('${o.id}')">
+                  <p class="text-[10px] font-bold text-white uppercase opacity-70">${o.status.replace(/-/g,' ')}</p>
+                  <div class="flex justify-between items-center text-white font-bold">
+                      <span>${o.placa}</span> <span class="text-xs font-normal opacity-50">${o.modelo}</span>
                   </div>
-                  <span class="text-[10px] bg-blue-100 text-blue-800 px-2 py-1 rounded font-bold">${o.status.replace(/-/g,' ')}</span>
               </div>
           `).join('');
-          res.classList.remove('hidden');
-      } else {
-          res.innerHTML = '<p class="p-3 text-center text-slate-400 text-xs">Nada encontrado.</p>';
-          res.classList.remove('hidden');
       }
   };
   
-  document.getElementById('logoutButton').onclick = () => location.reload();
+  const toggleBtn = document.getElementById('toggle-panel-btn');
+  if(toggleBtn) {
+      toggleBtn.onclick = () => {
+          const c = document.getElementById('attention-panel-container');
+          if(c) c.style.maxHeight = c.style.maxHeight === '0px' || c.style.maxHeight === '' ? '300px' : '0px';
+      };
+  }
+
+  // --- INPUTS MÍDIA ---
+  const fileInp = document.getElementById('media-input');
+  if(fileInp) {
+      fileInp.onchange = (e) => {
+          if(e.target.files.length) {
+              filesToUpload = Array.from(e.target.files);
+              const fn = document.getElementById('fileName');
+              if(fn) fn.innerText = `${filesToUpload.length} arquivo(s) selecionado(s)`;
+          }
+      };
+  }
+  
+  const camBtn = document.getElementById('openCameraBtn');
+  const galBtn = document.getElementById('openGalleryBtn');
+  
+  if(camBtn) camBtn.onclick = () => { fileInp.setAttribute('capture','environment'); fileInp.click(); };
+  if(galBtn) galBtn.onclick = () => { fileInp.removeAttribute('capture'); fileInp.click(); };
+
+  // --- FECHAR MODAIS ---
+  document.querySelectorAll('.btn-close-modal').forEach(b => b.onclick = (e) => {
+      e.target.closest('.modal').classList.add('hidden');
+      const lb = document.getElementById('lightbox');
+      if(lb) lb.classList.add('hidden');
+  });
+  
+  const lbClose = document.getElementById('lightbox-close');
+  if(lbClose) lbClose.onclick = () => document.getElementById('lightbox').classList.add('hidden');
+  
+  const lbNext = document.getElementById('lightbox-next');
+  if(lbNext) lbNext.onclick = () => { if(currentLightboxIndex < lightboxMedia.length-1) openLightbox(currentLightboxIndex+1); };
+  
+  const lbPrev = document.getElementById('lightbox-prev');
+  if(lbPrev) lbPrev.onclick = () => { if(currentLightboxIndex > 0) openLightbox(currentLightboxIndex-1); };
+  
+  // --- NOVA OS ---
+  const btnAddOS = document.getElementById('addOSBtn');
+  if(btnAddOS) {
+      btnAddOS.onclick = () => {
+          document.getElementById('osForm').reset();
+          const sel = document.getElementById('osResponsavel');
+          const loginSel = document.getElementById('userSelect');
+          if(sel && loginSel) sel.innerHTML = loginSel.innerHTML;
+          document.getElementById('osModal').classList.remove('hidden');
+          document.getElementById('osModal').classList.add('flex');
+      };
+  }
+  
+  const osForm = document.getElementById('osForm');
+  if(osForm) {
+      osForm.onsubmit = (e) => {
+          e.preventDefault();
+          const prioEl = document.querySelector('input[name="osPrioridade"]:checked');
+          const prio = prioEl ? prioEl.value : 'verde';
+          
+          const respJson = document.getElementById('osResponsavel').value;
+          let respName = 'Não Atribuído';
+          try { if(respJson) respName = JSON.parse(respJson).name; } catch(e){}
+
+          const newOS = {
+              placa: document.getElementById('osPlaca').value.toUpperCase(),
+              modelo: document.getElementById('osModelo').value,
+              cliente: document.getElementById('osCliente').value,
+              telefone: document.getElementById('osTelefone').value,
+              km: document.getElementById('osKm').value,
+              responsible: respName,
+              observacoes: document.getElementById('osObservacoes').value,
+              priority: prio,
+              status: 'Aguardando-Mecanico',
+              createdAt: new Date().toISOString()
+          };
+          
+          db.ref('serviceOrders').push(newOS);
+          document.getElementById('osModal').classList.add('hidden');
+          showNotification('Nova Ficha Criada!');
+      };
+  }
+
+  // --- BUSCA ---
+  const searchInp = document.getElementById('globalSearchInput');
+  if(searchInp) {
+      searchInp.oninput = (e) => {
+          const term = e.target.value.toUpperCase();
+          const res = document.getElementById('globalSearchResults');
+          
+          if(term.length < 2) { res.classList.add('hidden'); return; }
+          
+          const found = Object.values(allServiceOrders).filter(o => 
+              (o.placa && o.placa.includes(term)) || 
+              (o.cliente && o.cliente.toUpperCase().includes(term)) || 
+              (o.modelo && o.modelo.toUpperCase().includes(term))
+          );
+          
+          if(found.length) {
+              res.innerHTML = found.map(o => `
+                  <div class="p-3 hover:bg-slate-50 cursor-pointer border-b last:border-0 flex justify-between items-center" onclick="window.openDetails('${o.id}'); document.getElementById('globalSearchResults').classList.add('hidden')">
+                      <div>
+                          <p class="font-bold text-slate-800">${o.placa}</p>
+                          <p class="text-xs text-slate-500">${o.modelo} • ${o.cliente}</p>
+                      </div>
+                      <span class="text-[10px] bg-blue-100 text-blue-800 px-2 py-1 rounded font-bold">${o.status.replace(/-/g,' ')}</span>
+                  </div>
+              `).join('');
+              res.classList.remove('hidden');
+          } else {
+              res.innerHTML = '<p class="p-3 text-center text-slate-400 text-xs">Nada encontrado.</p>';
+              res.classList.remove('hidden');
+          }
+      };
+  }
+  
+  const logoutBtn = document.getElementById('logoutButton');
+  if(logoutBtn) logoutBtn.onclick = () => location.reload();
 });
