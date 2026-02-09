@@ -19,10 +19,10 @@
   <!-- TELA DE LOGIN -->
   <div id="userScreen" class="flex items-center justify-center min-h-screen p-4 bg-slate-900 fixed inset-0 z-[200]">
     <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-sm text-center border-t-8 border-blue-800 relative">
-      <div class="absolute top-0 right-0 bg-yellow-400 text-blue-900 text-xs font-bold px-2 py-1 rounded-bl-lg">v2.1 PRO</div>
+      <div class="absolute top-0 right-0 bg-yellow-400 text-blue-900 text-xs font-bold px-2 py-1 rounded-bl-lg">v3.0 PRO</div>
       <h1 class="text-2xl font-bold text-gray-800 mb-1">CENTER CAR</h1>
       <h2 class="text-3xl font-black text-blue-900 mb-2">MENECHELLI</h2>
-      <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-6">Sistema de Gestão de Pátio</p>
+      <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-6">Sistema de Gestão Inteligente</p>
       
       <form id="loginForm" class="mt-4 text-left">
         <div class="mb-4">
@@ -228,7 +228,7 @@
             </div>
             <div class="form-group">
               <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Modelo</label>
-              <input id="osModelo" type="text" placeholder="Ex: Gol G5" required class="w-full p-2.5 border rounded-lg">
+              <input id="osModelo" type="text" placeholder="Ex: Fiat Toro" required class="w-full p-2.5 border rounded-lg">
             </div>
             <div class="sm:col-span-2">
               <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Cliente</label>
@@ -315,30 +315,33 @@
               <!-- Nova Atualização -->
               <div class="bg-white rounded-xl shadow-sm p-5 border-t-4 border-blue-600">
                   <h3 class="font-bold text-gray-800 mb-3"><i class='bx bx-edit'></i> Registrar Atividade</h3>
-                  <form id="logForm" class="space-y-3">
-                    <input type="hidden" id="logOsId">
-                    <textarea id="logDescricao" placeholder="O que foi feito?" rows="3" required class="w-full p-3 border rounded-lg text-sm bg-gray-50 resize-none outline-none focus:ring-2 focus:ring-blue-100"></textarea>
-                    
-                    <div class="flex gap-2">
-                      <input id="logPecas" type="text" placeholder="Peças" class="w-2/3 p-2 border rounded text-sm">
-                      <input id="logValor" type="number" step="0.01" placeholder="R$" class="w-1/3 p-2 border rounded text-sm">
-                    </div>
+                  
+                  <div id="logFormContainer">
+                      <form id="logForm" class="space-y-3">
+                        <input type="hidden" id="logOsId">
+                        <textarea id="logDescricao" placeholder="Descreva o serviço ou observação..." rows="3" required class="w-full p-3 border border-gray-200 rounded-lg text-sm bg-gray-50 resize-none outline-none focus:ring-2 focus:ring-blue-100"></textarea>
+                        
+                        <div class="flex gap-2">
+                          <input id="logPecas" type="text" placeholder="Peças" class="w-2/3 p-2 border rounded text-sm">
+                          <input id="logValor" type="number" step="0.01" placeholder="R$" class="w-1/3 p-2 border rounded text-sm">
+                        </div>
 
-                    <div class="grid grid-cols-2 gap-2 pt-1">
-                        <button type="button" id="openCameraBtn" class="py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded text-xs font-bold flex items-center justify-center gap-2">
-                            <i class='bx bxs-camera'></i> Foto
-                        </button>
-                        <button type="button" id="openGalleryBtn" class="py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded text-xs font-bold flex items-center justify-center gap-2">
-                            <i class='bx bxs-image'></i> Galeria
-                        </button>
-                    </div>
-                    <input id="media-input" type="file" class="hidden" multiple accept="image/*,video/*,application/pdf">
-                    <p id="fileName" class="text-xs text-blue-600 font-semibold h-4 truncate"></p>
+                        <div class="grid grid-cols-2 gap-2 pt-1">
+                            <button type="button" id="openCameraBtn" class="py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded text-xs font-bold flex items-center justify-center gap-2">
+                                <i class='bx bxs-camera'></i> Foto
+                            </button>
+                            <button type="button" id="openGalleryBtn" class="py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded text-xs font-bold flex items-center justify-center gap-2">
+                                <i class='bx bxs-image'></i> Galeria
+                            </button>
+                        </div>
+                        <input id="media-input" type="file" class="hidden" multiple accept="image/*,video/*,application/pdf">
+                        <p id="fileName" class="text-xs text-blue-600 font-semibold h-4 truncate"></p>
 
-                    <button type="submit" class="w-full py-2.5 bg-blue-700 hover:bg-blue-800 text-white rounded-lg font-bold shadow flex justify-center items-center gap-2">
-                      <i class='bx bx-send'></i> Registrar
-                    </button>
-                  </form>
+                        <button type="submit" class="w-full py-2.5 bg-blue-700 hover:bg-blue-800 text-white rounded-lg font-bold shadow flex justify-center items-center gap-2">
+                          <i class='bx bx-send'></i> Registrar
+                        </button>
+                      </form>
+                  </div>
                   
                   <div id="post-log-actions" class="hidden mt-4 pt-4 border-t border-gray-100">
                     <p class="text-xs text-center text-gray-500 mb-2 font-medium">Mover Veículo?</p>
