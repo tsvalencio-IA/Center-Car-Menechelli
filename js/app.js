@@ -1,9 +1,10 @@
-/* ==================================================================
+ /* ==================================================================
    DASHBOARD CENTER CAR MENECHELLI - SISTEMA DE GESTÃO V2.1
    Desenvolvido por: thIAguinho Soluções
    ================================================================== */
 
 // CONFIGURAÇÃO FIREBASE (Center-Car-Menechelli)
+// COLE AQUI AS CHAVES DO SEU NOVO PROJETO SE AINDA NÃO TIVER FEITO
 const firebaseConfig = {
   apiKey: "AIzaSyDFbvRiLpUcXFJgVSwNobXi0fX_IceBK5k",
   authDomain: "centercarmenechelli-47e05.firebaseapp.com",
@@ -182,7 +183,7 @@ document.addEventListener('DOMContentLoaded', () => {
     listenToCloudinaryConfigs();
     
     // Permissões de Admin (Gestor vê tudo)
-    if (user.role === 'Gestor' || user.role === 'Desenvolvedor') {
+    if (user.role === 'Gestor' || user.role === 'Desenvolvedor' || user.name === 'Thiago Ventura Valencio') {
       document.getElementById('adminBtn').classList.remove('hidden');
       document.getElementById('reportsBtn').classList.remove('hidden');
     } else {
@@ -361,7 +362,7 @@ document.addEventListener('DOMContentLoaded', () => {
       
       // Controle do Botão Excluir (Só Gestor/Desenvolvedor)
       const delBtn = document.getElementById('deleteOsBtn');
-      if (currentUser.role === 'Gestor' || currentUser.role === 'Desenvolvedor') {
+      if (currentUser.role === 'Gestor' || currentUser.role === 'Desenvolvedor' || currentUser.name === 'Thiago Ventura Valencio') {
           delBtn.classList.remove('hidden');
       } else {
           delBtn.classList.add('hidden');
@@ -426,7 +427,7 @@ document.addEventListener('DOMContentLoaded', () => {
           }
 
           // Botão Delete (Gestor/Desenvolvedor)
-          const canDelete = currentUser && (currentUser.role === 'Gestor' || currentUser.role === 'Desenvolvedor');
+          const canDelete = currentUser && (currentUser.role === 'Gestor' || currentUser.role === 'Desenvolvedor' || currentUser.name === 'Thiago Ventura Valencio');
 
           return `
           <div class="relative aspect-square bg-gray-800 rounded-lg overflow-hidden cursor-pointer group shadow-sm hover:shadow-md transition-all border border-gray-200" onclick="openLightbox(${idx})">
