@@ -1,4 +1,4 @@
-
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
@@ -18,7 +18,8 @@
 
   <!-- TELA DE LOGIN -->
   <div id="userScreen" class="flex items-center justify-center min-h-screen p-4 bg-slate-900 fixed inset-0 z-[200]">
-    <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-sm text-center border-t-8 border-blue-800">
+    <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-sm text-center border-t-8 border-blue-800 relative overflow-hidden">
+      <div class="absolute top-0 right-0 bg-yellow-400 text-xs font-bold px-2 py-1 rounded-bl-lg">v2.1</div>
       <h1 class="text-2xl font-bold text-gray-800 mb-1">CENTER CAR</h1>
       <h2 class="text-3xl font-black text-blue-900 mb-2">MENECHELLI</h2>
       <p class="text-sm font-semibold text-gray-500 uppercase tracking-widest">Sistema de Gestão</p>
@@ -26,23 +27,30 @@
       <form id="loginForm" class="mt-8 text-left">
         <div class="mb-4">
           <label for="userSelect" class="block text-sm font-medium text-gray-700 mb-1">Colaborador</label>
-          <select id="userSelect" required class="p-3 border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50">
-            <option value="">Selecione seu usuário...</option>
-          </select>
+          <div class="relative">
+            <select id="userSelect" required class="appearance-none p-3 border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 text-gray-700">
+              <option value="">Carregando usuários...</option>
+            </select>
+            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+              <i class='bx bx-chevron-down'></i>
+            </div>
+          </div>
         </div>
         <div class="mb-6">
           <label for="passwordInput" class="block text-sm font-medium text-gray-700 mb-1">Senha de Acesso</label>
           <input type="password" id="passwordInput" required class="p-3 border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Digite sua senha">
         </div>
-        <button type="submit" class="w-full btn bg-blue-800 hover:bg-blue-900 text-white py-3 text-base font-bold shadow-lg transition-transform transform hover:scale-105">
-          ACESSAR SISTEMA
+        <button type="submit" class="w-full btn bg-blue-800 hover:bg-blue-900 text-white py-3 text-base font-bold shadow-lg transition-transform transform hover:scale-105 flex justify-center items-center gap-2">
+          <i class='bx bx-log-in-circle'></i> ACESSAR SISTEMA
         </button>
         <p id="loginError" class="text-red-500 text-sm mt-4 text-center h-4 font-medium"></p>
       </form>
       
       <div class="mt-8 pt-4 border-t border-gray-100">
           <p class="text-xs text-gray-400">Desenvolvido por</p>
-          <p class="text-sm font-bold text-blue-900">thIAguinho Soluções 🤖</p>
+          <p class="text-sm font-bold text-blue-900 flex items-center justify-center gap-1">
+            thIAguinho Soluções <i class='bx bxs-bot text-yellow-500'></i>
+          </p>
       </div>
     </div>
   </div>
@@ -63,12 +71,12 @@
                 <p class="text-[10px] font-bold text-gray-500 tracking-wide">CENTER CAR</p>
             </div>
             
-            <div class="h-8 w-px bg-gray-300 mx-1"></div>
+            <div class="h-8 w-px bg-gray-300 mx-1 hidden sm:block"></div>
 
             <div class="flex items-center">
                 <div id="alert-led" class="w-3 h-3 rounded-full bg-red-500 animate-pulse hidden mr-2 shadow-[0_0_8px_rgba(239,68,68,0.8)]"></div>
                 <button id="toggle-panel-btn" class="text-gray-500 hover:text-blue-800 p-1 rounded transition-colors flex items-center gap-1 text-xs font-semibold uppercase bg-gray-100 hover:bg-gray-200 px-2 py-1">
-                    <i class='bx bxs-error-circle text-lg'></i> Alertas
+                    <i class='bx bxs-error-circle text-lg'></i> <span class="hidden sm:inline">Alertas</span>
                     <i class='bx bxs-chevron-down transition-transform duration-300' id="toggle-icon"></i>
                 </button>
             </div>
@@ -93,7 +101,7 @@
             <i class='bx bx-plus-circle text-xl'></i><span class="hidden lg:inline text-sm font-semibold">Nova O.S.</span>
           </button>
           
-          <button id="adminBtn" class="btn text-gray-600 hover:text-blue-800 hover:bg-gray-100 p-2 rounded-lg hidden transition-colors" title="Configurações">
+          <button id="adminBtn" class="btn text-gray-600 hover:text-blue-800 hover:bg-gray-100 p-2 rounded-lg hidden transition-colors" title="Configurações (Admin)">
               <i class='bx bxs-cog text-xl'></i>
           </button>
            <button id="reportsBtn" class="btn text-green-600 hover:text-green-800 hover:bg-green-50 p-2 rounded-lg hidden transition-colors" title="Relatórios">
@@ -116,9 +124,9 @@
       </div>
     </header>
 
-    <main class="flex-grow container mx-auto p-4 sm:p-6 lg:p-8 overflow-x-hidden">
+    <main class="flex-grow container mx-auto p-2 sm:p-4 lg:p-6 overflow-x-hidden">
       <!-- Kanban Board -->
-      <div class="flex gap-4 overflow-x-auto pb-4 snap-x min-h-[calc(100vh-140px)]" id="kanbanBoard">
+      <div class="flex gap-4 overflow-x-auto pb-4 snap-x min-h-[calc(100vh-140px)] custom-scrollbar" id="kanbanBoard">
         <!-- Colunas geradas via JS -->
       </div>
     </main>
@@ -127,8 +135,8 @@
     <footer class="bg-white border-t border-gray-200 py-3 mt-auto">
         <div class="container mx-auto px-4 flex justify-between items-center text-xs text-gray-500">
             <span>© 2026 Center Car Menechelli</span>
-            <span class="flex items-center gap-1">
-                Desenvolvido por <strong class="text-blue-900">thIAguinho Soluções</strong> <i class='bx bxs-bot'></i>
+            <span class="flex items-center gap-1 font-bold text-blue-900">
+                Desenvolvido por thIAguinho Soluções <i class='bx bxs-bot'></i>
             </span>
         </div>
     </footer>
@@ -313,24 +321,64 @@
     </div>
   </div>
   
-  <!-- Modal Admin (Cloudinary) -->
+  <!-- MODAL ADMIN (CLOUDINARY E USUÁRIOS) -->
   <div id="adminModal" class="modal fixed inset-0 z-[101] hidden items-center justify-center p-4 bg-black bg-opacity-50">
-    <div class="modal-content w-full max-w-md bg-white rounded-xl shadow-xl p-6">
+    <div class="modal-content w-full max-w-2xl bg-white rounded-xl shadow-xl p-6 h-[80vh] flex flex-col">
         <div class="flex justify-between items-center mb-6">
-            <h2 class="text-xl font-bold text-gray-800">Configuração de Mídia</h2>
+            <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2"><i class='bx bxs-cog'></i> Administração do Sistema</h2>
             <button class="btn-close-modal text-2xl text-gray-400 hover:text-gray-600">&times;</button>
         </div>
-        <form id="cloudinaryForm" class="space-y-4">
-             <div>
-                 <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Cloud Name</label>
-                 <input id="cloudNameInput" type="text" placeholder="Ex: dyjlxqcnb" required class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none">
-             </div>
-             <div>
-                 <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Upload Preset (Unsigned)</label>
-                 <input id="uploadPresetInput" type="text" placeholder="Ex: oficina-preset" required class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none">
-             </div>
-             <button type="submit" class="w-full bg-blue-800 hover:bg-blue-900 text-white py-2 rounded font-bold transition-colors">Salvar Configuração</button>
-        </form>
+        
+        <!-- Abas -->
+        <div class="flex border-b border-gray-200 mb-4">
+            <button class="admin-tab active px-4 py-2 text-blue-600 border-b-2 border-blue-600 font-bold" data-target="tab-cloudinary">Mídia (Cloudinary)</button>
+            <button class="admin-tab px-4 py-2 text-gray-500 hover:text-gray-700" data-target="tab-users">Usuários</button>
+        </div>
+
+        <div class="overflow-y-auto flex-grow">
+            <!-- Aba Cloudinary -->
+            <div id="tab-cloudinary" class="admin-tab-content">
+                <p class="text-sm text-gray-600 mb-4 bg-yellow-50 p-3 rounded border border-yellow-200">
+                    <i class='bx bxs-info-circle'></i> Configure aqui as chaves para upload de fotos.
+                </p>
+                <form id="cloudinaryForm" class="space-y-4">
+                     <div>
+                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Cloud Name</label>
+                         <input id="cloudNameInput" type="text" placeholder="Ex: dyjlxqcnb" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none">
+                     </div>
+                     <div>
+                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Upload Preset (Unsigned)</label>
+                         <input id="uploadPresetInput" type="text" placeholder="Ex: oficina-preset" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none">
+                     </div>
+                     <button type="submit" class="w-full bg-blue-800 hover:bg-blue-900 text-white py-2 rounded font-bold transition-colors">Salvar Configuração de Mídia</button>
+                </form>
+            </div>
+
+            <!-- Aba Usuários -->
+            <div id="tab-users" class="admin-tab-content hidden">
+                <div class="bg-gray-50 p-4 rounded-lg mb-4 border border-gray-200">
+                    <h3 class="font-bold text-gray-700 mb-2">Adicionar Novo Usuário</h3>
+                    <form id="addUserForm" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <input type="text" id="newUserName" placeholder="Nome Completo" required class="p-2 border rounded">
+                        <select id="newUserRole" class="p-2 border rounded bg-white">
+                            <option value="Colaborador">Colaborador (Básico)</option>
+                            <option value="Mecânico">Mecânico</option>
+                            <option value="Atendente">Atendente (Recepção)</option>
+                            <option value="Gestor">Gestor (Acesso Total)</option>
+                        </select>
+                        <input type="text" id="newUserPass" placeholder="Senha de Acesso" required class="p-2 border rounded">
+                        <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                            <i class='bx bx-plus'></i> Adicionar
+                        </button>
+                    </form>
+                </div>
+                
+                <h3 class="font-bold text-gray-700 mb-2 border-b pb-1">Usuários Cadastrados</h3>
+                <div id="usersList" class="space-y-2">
+                    <!-- Lista de usuários renderizada via JS -->
+                </div>
+            </div>
+        </div>
     </div>
   </div>
 
