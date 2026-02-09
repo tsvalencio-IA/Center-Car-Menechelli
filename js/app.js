@@ -1,5 +1,5 @@
 /* ==================================================================
-   DASHBOARD CENTER CAR MENECHELLI - V3.6 (STABLE & ROBUST)
+   DASHBOARD CENTER CAR MENECHELLI - V3.7 (QUICK ACTIONS & EDIT)
    Desenvolvido por: thIAguinho Soluções
    ================================================================== */
 
@@ -62,7 +62,6 @@ const uploadFileToCloudinary = async (file) => {
 
 // --- INIT APP ---
 document.addEventListener('DOMContentLoaded', () => {
-  // Inicializa Firebase com tratamento de erro básico
   try {
       firebase.initializeApp(firebaseConfig);
   } catch(e) {
@@ -76,17 +75,13 @@ document.addEventListener('DOMContentLoaded', () => {
   db.ref('users').on('value', snap => {
       const data = snap.val();
       const select = document.getElementById('userSelect');
-      if(!select) return; // Guard clause se não estiver na tela de login
+      if(!select) return;
 
       select.innerHTML = '<option value="">Selecione...</option>';
-      
       if (data) {
           Object.entries(data).forEach(([key, user]) => {
-              // Sanitização básica
               if (!user.name) return;
-              
               const opt = document.createElement('option');
-              // Salvamos o objeto user inteiro como string para facilitar o login
               opt.value = JSON.stringify({id: key, name: user.name, role: user.role || 'Colaborador', password: user.password});
               opt.textContent = user.name;
               select.appendChild(opt);
@@ -122,7 +117,6 @@ document.addEventListener('DOMContentLoaded', () => {
                   document.getElementById('app').classList.add('flex');
                   document.getElementById('currentUserName').textContent = user.name.split(' ')[0];
                   
-                  // Permissões de Admin
                   if(user.role === 'Gestor' || user.name.includes('Thiago')) {
                       const adminBtn = document.getElementById('adminBtn');
                       const reportsBtn = document.getElementById('reportsBtn');
@@ -166,7 +160,6 @@ document.addEventListener('DOMContentLoaded', () => {
           const data = snap.val() || {};
           allServiceOrders = data;
           
-          // Limpeza segura
           STATUS_LIST.forEach(s => {
               const col = document.getElementById(`col-${s}`);
               const count = document.getElementById(`count-${s}`);
@@ -174,15 +167,13 @@ document.addEventListener('DOMContentLoaded', () => {
               if(count) count.innerText = '0';
           });
 
-          // População segura
           Object.entries(data).forEach(([id, os]) => {
-              if(!os.status) return; // Ignora dados corrompidos
+              if(!os.status) return; 
               os.id = id;
               const col = document.getElementById(`col-${os.status}`);
               if(col) col.innerHTML += createCard(os);
           });
 
-          // Atualização de contadores
           STATUS_LIST.forEach(s => {
               const col = document.getElementById(`col-${s}`);
               const count = document.getElementById(`count-${s}`);
@@ -191,13 +182,16 @@ document.addEventListener('DOMContentLoaded', () => {
           
           updateAlerts();
           
-          // Atualiza modal se estiver aberto e focado na OS que mudou
           const modal = document.getElementById('detailsModal');
           const openLogId = document.getElementById('logOsId');
           
           if(modal && !modal.classList.contains('hidden') && openLogId && openLogId.value) {
               const currentOs = allServiceOrders[openLogId.value];
               if(currentOs) {
+                  // Se não estiver editando, atualiza os campos (evita sobrescrever enquanto digita)
+                  if(!document.querySelector('.editing-field')) {
+                      refreshDetailsView(currentOs);
+                  }
                   renderTimeline(currentOs);
                   renderGallery(currentOs);
               }
@@ -206,7 +200,6 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const createCard = (os) => {
-      // Tratamento de dados nulos
       const placa = os.placa || 'SEM PLACA';
       const modelo = os.modelo || 'Desconhecido';
       const cliente = os.cliente || 'Anônimo';
@@ -216,6 +209,19 @@ document.addEventListener('DOMContentLoaded', () => {
       if(os.priority === 'verde') prioDot = '<span class="priority-dot bg-prio-verde" title="Normal"></span>';
       if(os.priority === 'amarelo') prioDot = '<span class="priority-dot bg-prio-amarelo" title="Atenção"></span>';
       if(os.priority === 'vermelho') prioDot = '<span class="priority-dot bg-prio-vermelho" title="Urgente"></span>';
+
+      // Lógica dos Botões de Movimentação Rápida
+      const currentIdx = STATUS_LIST.indexOf(os.status);
+      const hasPrev = currentIdx > 0;
+      const hasNext = currentIdx < STATUS_LIST.length - 1;
+
+      const btnPrev = hasPrev ? 
+          `<button onclick="event.stopPropagation(); window.quickMove('${os.id}', 'prev')" class="text-slate-400 hover:text-blue-600 p-1 transition-colors" title="Voltar Status"><i class='bx bx-chevron-left text-xl'></i></button>` 
+          : `<div class="w-7"></div>`;
+      
+      const btnNext = hasNext ? 
+          `<button onclick="event.stopPropagation(); window.quickMove('${os.id}', 'next')" class="text-slate-400 hover:text-blue-600 p-1 transition-colors" title="Avançar Status"><i class='bx bx-chevron-right text-xl'></i></button>` 
+          : `<div class="w-7"></div>`;
 
       return `
       <div class="vehicle-card status-${os.status}" onclick="window.openDetails('${os.id}')">
@@ -228,7 +234,44 @@ document.addEventListener('DOMContentLoaded', () => {
              <span class="flex items-center gap-1 truncate max-w-[60%]"><i class='bx bxs-user'></i> ${cliente.split(' ')[0]}</span>
              <span>${km}</span>
           </div>
+          
+          <!-- BOTÕES RÁPIDOS -->
+          <div class="flex justify-between items-center mt-2 pt-1 border-t border-gray-100">
+              ${btnPrev}
+              <span class="text-[9px] text-gray-300 uppercase font-bold tracking-wider">Mover</span>
+              ${btnNext}
+          </div>
       </div>`;
+  };
+
+  // --- MOVIMENTAÇÃO RÁPIDA (GLOBAL) ---
+  window.quickMove = (osId, dir) => {
+      const os = allServiceOrders[osId];
+      if(!os) return;
+      
+      const idx = STATUS_LIST.indexOf(os.status);
+      let newStatus = null;
+      
+      if(dir === 'next' && idx < STATUS_LIST.length - 1) newStatus = STATUS_LIST[idx + 1];
+      if(dir === 'prev' && idx > 0) newStatus = STATUS_LIST[idx - 1];
+      
+      if(newStatus) {
+          const updates = { status: newStatus, lastUpdate: new Date().toISOString() };
+          
+          // Atribuição automática de responsabilidade ao mover
+          if (newStatus === 'Em-Analise') updates.responsibleForBudget = currentUser.name;
+          else if (newStatus === 'Em-Execucao') updates.responsibleForService = currentUser.name;
+          else if (newStatus === 'Entregue') updates.responsibleForDelivery = currentUser.name;
+
+          db.ref(`serviceOrders/${osId}`).update(updates);
+          db.ref(`serviceOrders/${osId}/logs`).push({
+              user: currentUser.name, // Registra quem clicou no botão rápido
+              timestamp: new Date().toISOString(),
+              description: `Status alterado (Rápido): ${os.status} ➔ ${newStatus}`,
+              type: 'status'
+          });
+          showNotification('Status atualizado!');
+      }
   };
 
   // 6. DETALHES & MODAIS
@@ -237,36 +280,20 @@ document.addEventListener('DOMContentLoaded', () => {
       if(!os) return;
       
       document.getElementById('logOsId').value = id;
-      document.getElementById('modalTitlePlaca').textContent = os.placa || '---';
-      document.getElementById('modalTitleModelo').textContent = `${os.modelo || ''} • ${os.cliente || ''}`;
       
+      // Limpa formulários
       document.getElementById('logForm').reset();
       const fileNameDisplay = document.getElementById('fileName');
       if(fileNameDisplay) fileNameDisplay.innerText = '';
       filesToUpload = [];
-      
       const postActions = document.getElementById('post-log-actions');
       if(postActions) postActions.classList.add('hidden');
       
-      // Info Card com tratamento de nulos
-      const infoContent = document.getElementById('detailsInfoContent');
-      if(infoContent) {
-          infoContent.innerHTML = `
-              <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm mb-4">
-                  <div><p class="text-xs text-slate-400 uppercase font-bold">Telefone</p><p class="font-bold text-slate-700">${os.telefone || '-'}</p></div>
-                  <div><p class="text-xs text-slate-400 uppercase font-bold">KM Atual</p><p class="font-bold text-slate-700">${os.km || '-'}</p></div>
-                  <div><p class="text-xs text-slate-400 uppercase font-bold">Consultor</p><p class="font-bold text-slate-700">${os.responsible || '-'}</p></div>
-                  <div><p class="text-xs text-slate-400 uppercase font-bold">Entrada</p><p class="font-bold text-slate-700">${new Date(os.createdAt).toLocaleDateString('pt-BR')}</p></div>
-              </div>
-              ${os.observacoes ? `
-              <div class="bg-red-50 border-l-4 border-red-400 p-3 rounded text-sm text-red-800">
-                  <span class="font-bold block text-xs uppercase mb-1">Queixa do Cliente:</span>
-                  ${os.observacoes}
-              </div>` : ''}
-          `;
-      }
-
-      // Configurar Botão Excluir
+      refreshDetailsView(os); // Renderiza os dados
+      renderTimeline(os);
+      renderGallery(os);
+      
+      // Configurar Botão Excluir (Gestores)
       const delBtn = document.getElementById('deleteOsBtn');
       if(delBtn) {
           delBtn.onclick = () => {
@@ -283,15 +310,176 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const exportBtn = document.getElementById('exportOsBtn');
       if(exportBtn) exportBtn.onclick = () => printOS(os);
-
-      renderTimeline(os);
-      renderGallery(os);
       
       const modal = document.getElementById('detailsModal');
       if(modal) modal.classList.remove('hidden');
   };
 
-  // --- IMPRESSÃO ---
+  // Função auxiliar para renderizar os dados e permitir edição
+  const refreshDetailsView = (os) => {
+      const isManager = currentUser && (currentUser.role === 'Gestor' || currentUser.name.includes('Thiago'));
+      
+      // Helper para criar campo editável
+      const editable = (field, value, label) => {
+          if (!isManager) return `<span class="font-bold text-slate-700">${value || '-'}</span>`;
+          return `
+            <div class="flex items-center gap-2 group">
+                <span id="view-${field}" class="font-bold text-slate-700">${value || '-'}</span>
+                <i class='bx bx-edit-alt text-gray-400 hover:text-blue-600 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity' onclick="window.toggleEdit('${field}', '${os.id}')"></i>
+                <div id="edit-${field}" class="hidden flex gap-1 items-center">
+                    <input type="text" id="input-${field}" value="${value || ''}" class="p-1 text-sm border rounded w-full">
+                    <button onclick="window.saveEdit('${field}', '${os.id}')" class="text-green-600 hover:bg-green-100 p-1 rounded"><i class='bx bx-check'></i></button>
+                    <button onclick="window.cancelEdit('${field}')" class="text-red-500 hover:bg-red-100 p-1 rounded"><i class='bx bx-x'></i></button>
+                </div>
+            </div>`;
+      };
+
+      document.getElementById('modalTitlePlaca').innerHTML = isManager ? 
+          `<div class="flex items-center gap-2">${os.placa} <i class='bx bx-edit text-sm text-gray-300 hover:text-gray-500 cursor-pointer' onclick="window.toggleEdit('placa', '${os.id}', true)"></i></div>` : os.placa;
+          
+      // Input especial para Placa (aparece como modal/prompt se clicar no lapis do titulo)
+      // Para simplificar, vou usar o mesmo sistema inline para os outros campos abaixo
+
+      document.getElementById('modalTitleModelo').textContent = `${os.modelo || ''} • ${os.cliente || ''}`;
+
+      // Painel de Informações Principais com Edição
+      const infoContent = document.getElementById('detailsInfoContent');
+      if(infoContent) {
+          infoContent.innerHTML = `
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <!-- Dados Editáveis -->
+                  <div class="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                      <p class="text-xs text-slate-400 uppercase font-bold mb-1">Cliente</p>
+                      ${editable('cliente', os.cliente, 'Cliente')}
+                  </div>
+                  <div class="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                      <p class="text-xs text-slate-400 uppercase font-bold mb-1">Telefone</p>
+                      ${editable('telefone', os.telefone, 'Telefone')}
+                  </div>
+                  <div class="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                      <p class="text-xs text-slate-400 uppercase font-bold mb-1">Modelo/Veículo</p>
+                      ${editable('modelo', os.modelo, 'Modelo')}
+                  </div>
+                  <div class="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                      <p class="text-xs text-slate-400 uppercase font-bold mb-1">Consultor</p>
+                      <p class="font-bold text-slate-700">${os.responsible || '-'}</p>
+                  </div>
+              </div>
+
+              <!-- Atualização de KM (Para Todos) -->
+              <div class="bg-blue-50 p-3 rounded-lg border border-blue-100 flex items-center justify-between mb-4">
+                  <div>
+                      <p class="text-xs text-blue-800 uppercase font-bold">KM Atual</p>
+                      <p class="font-black text-xl text-blue-900">${os.km ? os.km + ' km' : '---'}</p>
+                  </div>
+                  <div class="flex gap-2 items-center">
+                      <input type="number" id="quickKmInput" placeholder="Novo KM" class="w-24 p-2 text-sm border border-blue-200 rounded text-center font-bold">
+                      <button onclick="window.saveKm('${os.id}')" class="btn bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-xs uppercase font-bold shadow-sm">
+                          Atualizar
+                      </button>
+                  </div>
+              </div>
+
+              <!-- Queixa (Editável) -->
+              <div class="bg-red-50 border-l-4 border-red-400 p-3 rounded text-sm text-red-800 relative group">
+                  <span class="font-bold block text-xs uppercase mb-1">Queixa do Cliente:</span>
+                  ${isManager ? `
+                    <div id="view-observacoes" class="whitespace-pre-wrap">${os.observacoes || 'Sem queixa registrada.'}</div>
+                    <i class='bx bx-edit absolute top-2 right-2 cursor-pointer opacity-0 group-hover:opacity-100' onclick="window.toggleEdit('observacoes', '${os.id}')"></i>
+                    <div id="edit-observacoes" class="hidden mt-2">
+                        <textarea id="input-observacoes" class="w-full p-2 border rounded text-sm mb-2" rows="3">${os.observacoes || ''}</textarea>
+                        <div class="flex justify-end gap-2">
+                            <button onclick="window.cancelEdit('observacoes')" class="text-xs text-gray-500 underline">Cancelar</button>
+                            <button onclick="window.saveEdit('observacoes', '${os.id}')" class="bg-red-600 text-white px-3 py-1 rounded text-xs font-bold">Salvar Alteração</button>
+                        </div>
+                    </div>
+                  ` : (os.observacoes || 'Sem queixa registrada.')}
+              </div>
+          `;
+      }
+  };
+
+  // --- FUNÇÕES DE EDIÇÃO E KM ---
+  window.toggleEdit = (field, osId, isPrompt = false) => {
+      if(isPrompt && field === 'placa') {
+          // Edição Especial para Placa via Prompt (mais seguro para layout)
+          const os = allServiceOrders[osId];
+          const newPlaca = prompt("Editar Placa:", os.placa);
+          if(newPlaca && newPlaca !== os.placa) {
+              const updates = { placa: newPlaca.toUpperCase() };
+              db.ref(`serviceOrders/${osId}`).update(updates);
+              logEdit(osId, 'Placa', os.placa, newPlaca.toUpperCase());
+          }
+          return;
+      }
+
+      const viewEl = document.getElementById(`view-${field}`);
+      const editEl = document.getElementById(`edit-${field}`);
+      if(viewEl && editEl) {
+          viewEl.classList.add('hidden');
+          editEl.classList.remove('hidden');
+          editEl.classList.add('editing-field'); // Marcador para evitar refresh automatico
+          const input = document.getElementById(`input-${field}`);
+          if(input) input.focus();
+      }
+  };
+
+  window.cancelEdit = (field) => {
+      const viewEl = document.getElementById(`view-${field}`);
+      const editEl = document.getElementById(`edit-${field}`);
+      if(viewEl && editEl) {
+          viewEl.classList.remove('hidden');
+          editEl.classList.add('hidden');
+          editEl.classList.remove('editing-field');
+      }
+  };
+
+  window.saveEdit = (field, osId) => {
+      const input = document.getElementById(`input-${field}`);
+      const os = allServiceOrders[osId];
+      if(!input || !os) return;
+
+      const newValue = input.value.trim();
+      const oldValue = os[field] || '';
+
+      if (newValue !== oldValue) {
+          const updates = {};
+          updates[field] = newValue;
+          db.ref(`serviceOrders/${osId}`).update(updates);
+          logEdit(osId, field, oldValue, newValue);
+          showNotification('Informação atualizada!');
+      }
+      window.cancelEdit(field);
+  };
+
+  window.saveKm = (osId) => {
+      const input = document.getElementById('quickKmInput');
+      if(!input || !input.value) return;
+      
+      const newKm = input.value;
+      db.ref(`serviceOrders/${osId}`).update({ km: newKm });
+      
+      // Log específico de KM
+      db.ref(`serviceOrders/${osId}/logs`).push({
+          user: currentUser.name,
+          timestamp: new Date().toISOString(),
+          description: `KM atualizado: ${newKm} km`,
+          type: 'log' // ou um tipo 'info' se quiser ícone diferente
+      });
+      showNotification('Quilometragem atualizada!');
+      input.value = '';
+  };
+
+  const logEdit = (osId, field, oldVal, newVal) => {
+      db.ref(`serviceOrders/${osId}/logs`).push({
+          user: currentUser.name,
+          timestamp: new Date().toISOString(),
+          description: `EDITADO: ${field} alterado de "${oldVal}" para "${newVal}".`,
+          type: 'log'
+      });
+  };
+
+  // --- IMPRESSÃO (Mantida e Estável) ---
   const printOS = (os) => {
       const logs = os.logs ? Object.values(os.logs).sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp)) : [];
       let totalPecas = 0;
@@ -309,10 +497,7 @@ document.addEventListener('DOMContentLoaded', () => {
           </tr>`;
       }).join('');
 
-      const midia = os.media ? Object.values(os.media).filter(m => {
-          // Check defensivo para tipo
-          return m && ( (m.type && m.type.includes('image')) || (m.url && m.url.match(/\.(jpeg|jpg|png)$/i)) );
-      }).slice(0, 6) : []; 
+      const midia = os.media ? Object.values(os.media).filter(m => m && ( (m.type && m.type.includes('image')) || (m.url && m.url.match(/\.(jpeg|jpg|png|webp)$/i)) )).slice(0, 6) : []; 
 
       const fotosHtml = midia.length ? `
           <div class="section">
@@ -409,7 +594,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   window.deleteLog = (osId, key) => { if(confirm('Excluir log?')) db.ref(`serviceOrders/${osId}/logs/${key}`).remove(); };
 
-  // --- GALERIA BLINDADA (CORREÇÃO DO BUG DO INCLUDE) ---
+  // --- GALERIA ---
   const renderGallery = (os) => {
       const grid = document.getElementById('thumbnail-grid');
       if(!os.media) { grid.innerHTML = '<p class="col-span-full text-center text-slate-400 text-xs py-2">Sem fotos.</p>'; return; }
@@ -418,12 +603,9 @@ document.addEventListener('DOMContentLoaded', () => {
       lightboxMedia = midia.map(m => m[1]); 
 
       grid.innerHTML = midia.map(([key, m], idx) => {
-          // CORREÇÃO CRÍTICA: Garante que m e m.type existam antes de usar .includes
-          // Se m.type não existir (banco legado), assume string vazia para não quebrar
           const fileType = (m && m.type) ? m.type : '';
           const fileUrl = (m && m.url) ? m.url : '';
           
-          // Verifica se é vídeo pelo type OU pela extensão da URL (fallback)
           const isVideo = fileType.includes('video') || fileUrl.match(/\.(mp4|webm|ogg)$/i);
           const isPdf = fileType.includes('pdf') || fileUrl.match(/\.pdf$/i);
 
@@ -446,7 +628,6 @@ document.addEventListener('DOMContentLoaded', () => {
   window.openLightbox = (idx) => {
       currentLightboxIndex = idx;
       const m = lightboxMedia[idx];
-      // Defensive Check
       if(!m || !m.url) return;
 
       const content = document.getElementById('lightbox-content');
@@ -459,7 +640,7 @@ document.addEventListener('DOMContentLoaded', () => {
           content.innerHTML = `<video src="${m.url}" controls autoplay class="max-w-full max-h-full rounded shadow-2xl"></video>`;
       }
       else {
-          window.open(m.url); // PDF ou outros
+          window.open(m.url); 
           return;
       }
 
@@ -473,7 +654,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
   };
 
-  // --- ACTIONS ---
+  // --- ACTIONS FORM ---
   const logForm = document.getElementById('logForm');
   if(logForm) {
       logForm.onsubmit = async (e) => {
@@ -510,7 +691,6 @@ document.addEventListener('DOMContentLoaded', () => {
               const fn = document.getElementById('fileName');
               if(fn) fn.innerText = '';
               
-              // Fluxo de Movimentação
               const actions = document.getElementById('post-log-actions');
               if(actions) actions.classList.remove('hidden');
               
@@ -522,7 +702,7 @@ document.addEventListener('DOMContentLoaded', () => {
       };
   }
 
-  // Movimentação
+  // Movimentação (Manual via Log)
   const moveStatus = (dir) => {
       const id = document.getElementById('logOsId').value;
       const os = allServiceOrders[id];
@@ -537,7 +717,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if(newStatus) {
           db.ref(`serviceOrders/${id}`).update({status: newStatus, lastUpdate: new Date().toISOString()});
           db.ref(`serviceOrders/${id}/logs`).push({
-              user: 'SISTEMA',
+              user: currentUser.name,
               timestamp: new Date().toISOString(),
               description: `Status alterado: ${os.status} ➔ ${newStatus}`,
               type: 'status'
