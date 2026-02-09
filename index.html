@@ -19,38 +19,38 @@
   <!-- TELA DE LOGIN -->
   <div id="userScreen" class="flex items-center justify-center min-h-screen p-4 bg-slate-900 fixed inset-0 z-[200]">
     <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-sm text-center border-t-8 border-blue-800 relative overflow-hidden">
-      <div class="absolute top-0 right-0 bg-yellow-400 text-xs font-bold px-2 py-1 rounded-bl-lg">v2.1</div>
+      <div class="absolute top-0 right-0 bg-yellow-400 text-xs font-bold px-2 py-1 rounded-bl-lg text-blue-900">v2.1</div>
       <h1 class="text-2xl font-bold text-gray-800 mb-1">CENTER CAR</h1>
       <h2 class="text-3xl font-black text-blue-900 mb-2">MENECHELLI</h2>
-      <p class="text-sm font-semibold text-gray-500 uppercase tracking-widest">Sistema de Gestão</p>
+      <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-6">Sistema de Gestão Inteligente</p>
       
-      <form id="loginForm" class="mt-8 text-left">
+      <form id="loginForm" class="mt-4 text-left">
         <div class="mb-4">
-          <label for="userSelect" class="block text-sm font-medium text-gray-700 mb-1">Colaborador</label>
+          <label for="userSelect" class="block text-xs font-bold text-gray-600 uppercase mb-1">Colaborador</label>
           <div class="relative">
-            <select id="userSelect" required class="appearance-none p-3 border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 text-gray-700">
-              <option value="">Carregando usuários...</option>
+            <select id="userSelect" required class="appearance-none p-3 border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 text-gray-800 font-medium">
+              <option value="">Carregando equipe...</option>
             </select>
-            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-              <i class='bx bx-chevron-down'></i>
+            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-600">
+              <i class='bx bx-chevron-down text-xl'></i>
             </div>
           </div>
         </div>
         <div class="mb-6">
-          <label for="passwordInput" class="block text-sm font-medium text-gray-700 mb-1">Senha de Acesso</label>
-          <input type="password" id="passwordInput" required class="p-3 border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Digite sua senha">
+          <label for="passwordInput" class="block text-xs font-bold text-gray-600 uppercase mb-1">Senha de Acesso</label>
+          <input type="password" id="passwordInput" required class="p-3 border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" placeholder="Digite sua senha">
         </div>
-        <button type="submit" class="w-full btn bg-blue-800 hover:bg-blue-900 text-white py-3 text-base font-bold shadow-lg transition-transform transform hover:scale-105 flex justify-center items-center gap-2">
-          <i class='bx bx-log-in-circle'></i> ACESSAR SISTEMA
+        <button type="submit" class="w-full btn bg-blue-800 hover:bg-blue-900 text-white py-3 text-sm font-bold shadow-lg transition-transform transform hover:scale-[1.02] flex justify-center items-center gap-2 uppercase tracking-wide">
+          <i class='bx bx-log-in-circle text-lg'></i> Acessar Painel
         </button>
-        <p id="loginError" class="text-red-500 text-sm mt-4 text-center h-4 font-medium"></p>
+        <p id="loginError" class="text-red-500 text-xs mt-3 text-center h-4 font-bold"></p>
       </form>
       
-      <div class="mt-8 pt-4 border-t border-gray-100">
-          <p class="text-xs text-gray-400">Desenvolvido por</p>
-          <p class="text-sm font-bold text-blue-900 flex items-center justify-center gap-1">
-            thIAguinho Soluções <i class='bx bxs-bot text-yellow-500'></i>
-          </p>
+      <div class="mt-8 pt-4 border-t border-gray-100 flex flex-col items-center gap-1">
+          <p class="text-[10px] text-gray-400 uppercase tracking-wider">Desenvolvido com IA por</p>
+          <div class="flex items-center gap-1 text-blue-900 font-bold text-sm">
+            <span>thIAguinho Soluções</span> <i class='bx bxs-bot text-yellow-500'></i>
+          </div>
       </div>
     </div>
   </div>
@@ -60,86 +60,172 @@
     <header class="bg-white shadow-md sticky top-0 z-40">
       <!-- Painel de Atenção (Colapsável) -->
       <div id="attention-panel-container" class="transition-all duration-300 ease-in-out overflow-hidden max-h-0 bg-gray-900">
-        <div id="attention-panel" class="grid grid-cols-1 sm:grid-cols-2 gap-2 p-2 container mx-auto"></div>
+        <div id="attention-panel" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-3 container mx-auto"></div>
       </div>
 
       <!-- Barra de Navegação -->
       <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center gap-4">
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-4">
             <div class="flex flex-col">
-                <h1 class="text-xl font-black text-blue-900 leading-none">MENECHELLI</h1>
-                <p class="text-[10px] font-bold text-gray-500 tracking-wide">CENTER CAR</p>
+                <h1 class="text-xl font-black text-blue-900 leading-none tracking-tight">MENECHELLI</h1>
+                <p class="text-[10px] font-bold text-gray-500 tracking-widest uppercase">Center Car</p>
             </div>
             
-            <div class="h-8 w-px bg-gray-300 mx-1 hidden sm:block"></div>
+            <div class="h-8 w-px bg-gray-200 mx-1 hidden sm:block"></div>
 
             <div class="flex items-center">
                 <div id="alert-led" class="w-3 h-3 rounded-full bg-red-500 animate-pulse hidden mr-2 shadow-[0_0_8px_rgba(239,68,68,0.8)]"></div>
-                <button id="toggle-panel-btn" class="text-gray-500 hover:text-blue-800 p-1 rounded transition-colors flex items-center gap-1 text-xs font-semibold uppercase bg-gray-100 hover:bg-gray-200 px-2 py-1">
-                    <i class='bx bxs-error-circle text-lg'></i> <span class="hidden sm:inline">Alertas</span>
-                    <i class='bx bxs-chevron-down transition-transform duration-300' id="toggle-icon"></i>
+                <button id="toggle-panel-btn" class="text-gray-600 hover:text-blue-800 hover:bg-gray-100 p-1.5 rounded-lg transition-all flex items-center gap-2 text-xs font-bold uppercase border border-gray-200">
+                    <i class='bx bxs-error-circle text-lg text-red-500'></i> <span class="hidden sm:inline">Alertas</span>
+                    <i class='bx bxs-chevron-down transition-transform duration-300 text-gray-400' id="toggle-icon"></i>
                 </button>
             </div>
         </div>
         
-        <div class="flex-grow max-w-md relative search-container hidden md:block mx-4">
-            <div class="relative">
-                <i class='bx bx-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg'></i>
-                <input type="search" id="globalSearchInput" placeholder="Buscar placa, cliente ou OS..." class="w-full py-2 pl-10 pr-4 text-sm border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 transition-all focus:bg-white shadow-sm">
+        <div class="flex-grow max-w-lg relative search-container hidden md:block mx-4">
+            <div class="relative group">
+                <i class='bx bx-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg group-focus-within:text-blue-500 transition-colors'></i>
+                <input type="search" id="globalSearchInput" placeholder="Pesquisar placa, cliente, modelo..." class="w-full py-2.5 pl-10 pr-4 text-sm border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 transition-all focus:bg-white shadow-sm">
             </div>
-            <div id="globalSearchResults" class="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-b-lg shadow-xl z-50 hidden max-h-80 overflow-y-auto"></div>
+            <div id="globalSearchResults" class="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-2xl z-50 hidden max-h-80 overflow-y-auto mt-2"></div>
         </div>
 
         <div class="flex items-center gap-2 sm:gap-3">
           <!-- Botão Consultor IA -->
           <a href="consultor.html" class="btn bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-lg flex items-center gap-2 shadow-md transition-transform active:scale-95 group" title="Consultor Técnico IA">
             <i class='bx bxs-brain text-xl group-hover:animate-pulse'></i>
-            <span class="hidden lg:inline text-sm font-semibold">thIAguinho</span>
+            <span class="hidden lg:inline text-xs font-bold uppercase">thIAguinho</span>
           </a>
 
-          <button id="addOSBtn" class="btn bg-blue-700 hover:bg-blue-800 text-white px-3 py-2 rounded-lg flex items-center gap-2 shadow-md transition-transform active:scale-95">
-            <i class='bx bx-plus-circle text-xl'></i><span class="hidden lg:inline text-sm font-semibold">Nova O.S.</span>
+          <button id="addOSBtn" class="btn bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow-md transition-transform active:scale-95">
+            <i class='bx bx-plus-circle text-xl'></i><span class="hidden lg:inline text-xs font-bold uppercase">Nova O.S.</span>
           </button>
           
-          <button id="adminBtn" class="btn text-gray-600 hover:text-blue-800 hover:bg-gray-100 p-2 rounded-lg hidden transition-colors" title="Configurações (Admin)">
-              <i class='bx bxs-cog text-xl'></i>
-          </button>
-           <button id="reportsBtn" class="btn text-green-600 hover:text-green-800 hover:bg-green-50 p-2 rounded-lg hidden transition-colors" title="Relatórios">
-              <i class='bx bxs-file-pdf text-xl'></i>
-          </button>
+          <div class="flex items-center gap-1 border-l border-gray-200 pl-2 ml-1">
+              <button id="adminBtn" class="btn text-gray-500 hover:text-blue-800 hover:bg-blue-50 p-2 rounded-lg hidden transition-colors" title="Configurações (Admin)">
+                  <i class='bx bxs-cog text-2xl'></i>
+              </button>
+               <button id="reportsBtn" class="btn text-gray-500 hover:text-green-700 hover:bg-green-50 p-2 rounded-lg hidden transition-colors" title="Relatórios">
+                  <i class='bx bxs-file-pdf text-2xl'></i>
+              </button>
+          </div>
           
-          <div class="text-right ml-2 border-l pl-3 border-gray-300 flex flex-col items-end">
-            <p id="currentUserName" class="font-bold text-gray-800 text-xs sm:text-sm leading-tight"></p>
-            <button id="logoutButton" class="text-[10px] text-red-500 hover:text-red-700 font-semibold uppercase tracking-wide hover:underline mt-0.5">Sair</button>
+          <div class="text-right flex flex-col items-end pl-2">
+            <p id="currentUserName" class="font-bold text-gray-800 text-xs leading-tight max-w-[100px] truncate"></p>
+            <button id="logoutButton" class="text-[10px] text-red-500 hover:text-red-700 font-bold uppercase tracking-wide hover:underline mt-0.5">Sair</button>
           </div>
         </div>
       </div>
       
       <!-- Busca Mobile -->
-      <div class="md:hidden px-4 pb-3 border-t border-gray-100 pt-2">
+      <div class="md:hidden px-4 pb-3 border-t border-gray-100 pt-3 bg-white">
         <div class="relative">
             <i class='bx bx-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400'></i>
-            <input type="search" id="globalSearchInputMobile" placeholder="Buscar placa..." class="w-full py-2 pl-9 pr-3 text-sm border border-gray-300 rounded-lg bg-gray-50">
+            <input type="search" id="globalSearchInputMobile" placeholder="Buscar placa..." class="w-full py-2 pl-9 pr-3 text-sm border border-gray-300 rounded-lg bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none">
         </div>
       </div>
     </header>
 
-    <main class="flex-grow container mx-auto p-2 sm:p-4 lg:p-6 overflow-x-hidden">
-      <!-- Kanban Board -->
-      <div class="flex gap-4 overflow-x-auto pb-4 snap-x min-h-[calc(100vh-140px)] custom-scrollbar" id="kanbanBoard">
+    <main class="flex-grow container mx-auto p-3 sm:p-6 overflow-x-hidden">
+      <!-- Kanban Board (Ajustado para Scroll Horizontal Fluido) -->
+      <div class="flex gap-5 overflow-x-auto pb-6 snap-x min-h-[calc(100vh-160px)] custom-scrollbar px-1" id="kanbanBoard">
         <!-- Colunas geradas via JS -->
       </div>
     </main>
 
     <!-- Rodapé da Aplicação -->
-    <footer class="bg-white border-t border-gray-200 py-3 mt-auto">
-        <div class="container mx-auto px-4 flex justify-between items-center text-xs text-gray-500">
-            <span>© 2026 Center Car Menechelli</span>
-            <span class="flex items-center gap-1 font-bold text-blue-900">
-                Desenvolvido por thIAguinho Soluções <i class='bx bxs-bot'></i>
+    <footer class="bg-white border-t border-gray-200 py-4 mt-auto">
+        <div class="container mx-auto px-4 flex flex-col sm:flex-row justify-between items-center text-xs text-gray-500 gap-2">
+            <span>© 2026 Center Car Menechelli - Todos os direitos reservados.</span>
+            <span class="flex items-center gap-1 font-bold text-blue-900 bg-blue-50 px-3 py-1 rounded-full border border-blue-100">
+                Desenvolvido por thIAguinho Soluções <i class='bx bxs-bot text-yellow-500'></i>
             </span>
         </div>
     </footer>
+  </div>
+
+  <!-- MODAL ADMIN (CLOUDINARY E USUÁRIOS) - NOVO E COMPLETO -->
+  <div id="adminModal" class="modal fixed inset-0 z-[101] hidden items-center justify-center p-4 bg-black bg-opacity-60 backdrop-blur-sm">
+    <div class="modal-content w-full max-w-3xl bg-white rounded-xl shadow-2xl p-0 h-[85vh] flex flex-col overflow-hidden">
+        <div class="flex justify-between items-center p-5 border-b bg-gray-50">
+            <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2"><i class='bx bxs-cog text-blue-600'></i> Administração do Sistema</h2>
+            <button class="btn-close-modal text-3xl text-gray-400 hover:text-red-500 transition-colors">&times;</button>
+        </div>
+        
+        <!-- Abas -->
+        <div class="flex border-b border-gray-200 bg-white">
+            <button class="admin-tab active flex-1 py-4 text-blue-600 border-b-2 border-blue-600 font-bold bg-blue-50/50 transition-all hover:bg-blue-50" data-target="tab-cloudinary">
+                <i class='bx bxs-cloud-upload mr-1'></i> Mídia (Cloudinary)
+            </button>
+            <button class="admin-tab flex-1 py-4 text-gray-500 hover:text-gray-700 hover:bg-gray-50 font-medium transition-all" data-target="tab-users">
+                <i class='bx bxs-user-detail mr-1'></i> Gestão de Equipe
+            </button>
+        </div>
+
+        <div class="overflow-y-auto flex-grow p-6 bg-gray-50/30">
+            <!-- Aba Cloudinary -->
+            <div id="tab-cloudinary" class="admin-tab-content">
+                <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded-r-lg">
+                    <p class="text-sm text-blue-800 font-medium">Configure aqui as chaves de API do Cloudinary para habilitar o upload de fotos e vídeos nas Ordens de Serviço.</p>
+                </div>
+                <form id="cloudinaryForm" class="space-y-5 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                     <div>
+                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Cloud Name</label>
+                         <input id="cloudNameInput" type="text" placeholder="Ex: dyjlxqcnb" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 font-mono text-sm">
+                     </div>
+                     <div>
+                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Upload Preset (Unsigned)</label>
+                         <input id="uploadPresetInput" type="text" placeholder="Ex: oficina-preset" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 font-mono text-sm">
+                     </div>
+                     <button type="submit" class="w-full bg-blue-700 hover:bg-blue-800 text-white py-3 rounded-lg font-bold transition-colors shadow-md flex justify-center items-center gap-2">
+                        <i class='bx bx-save text-xl'></i> Salvar Configuração
+                     </button>
+                </form>
+                <div class="mt-8">
+                    <h3 class="font-bold text-gray-700 mb-3 text-xs uppercase tracking-wider">Status Atual</h3>
+                    <div id="activeCloudinaryInfo" class="text-sm font-mono bg-white p-4 rounded-lg border border-gray-200 shadow-sm text-gray-600 flex items-center gap-3">
+                        <i class='bx bx-loader-alt bx-spin'></i> Verificando configuração...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aba Usuários -->
+            <div id="tab-users" class="admin-tab-content hidden">
+                <div class="bg-white p-6 rounded-xl mb-6 border border-gray-200 shadow-sm">
+                    <h3 class="font-bold text-green-700 mb-4 flex items-center gap-2 border-b pb-2"><i class='bx bx-user-plus text-xl'></i> Novo Colaborador</h3>
+                    <form id="addUserForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nome Completo</label>
+                            <input type="text" id="newUserName" placeholder="Ex: João da Silva" required class="w-full p-2.5 border rounded-lg focus:ring-green-500 outline-none bg-gray-50">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Função / Cargo</label>
+                            <select id="newUserRole" class="w-full p-2.5 border rounded-lg bg-gray-50 focus:ring-green-500 outline-none">
+                                <option value="Colaborador">Colaborador (Básico)</option>
+                                <option value="Mecânico">Mecânico</option>
+                                <option value="Atendente">Atendente (Recepção)</option>
+                                <option value="Gestor">Gestor (Acesso Total)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Senha de Acesso</label>
+                            <input type="text" id="newUserPass" placeholder="Senha" required class="w-full p-2.5 border rounded-lg focus:ring-green-500 outline-none bg-gray-50">
+                        </div>
+                        <div class="md:col-span-2 pt-2">
+                            <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 px-4 rounded-lg shadow-sm transition-colors flex justify-center items-center gap-2">
+                                <i class='bx bx-check-circle'></i> Cadastrar Usuário
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <h3 class="font-bold text-gray-700 mb-3 text-xs uppercase tracking-wider ml-1">Equipe Cadastrada</h3>
+                <div id="usersList" class="space-y-3">
+                    <!-- Lista de usuários renderizada via JS -->
+                </div>
+            </div>
+        </div>
+    </div>
   </div>
 
   <!-- MODAL NOVA OS -->
@@ -154,7 +240,7 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div class="form-group">
               <label for="osPlaca" class="block text-xs font-bold text-gray-600 uppercase mb-1">Placa</label>
-              <input id="osPlaca" type="text" placeholder="ABC1234" required class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none uppercase font-mono text-lg">
+              <input id="osPlaca" type="text" placeholder="ABC1234" required class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none uppercase font-mono text-lg font-bold text-gray-800">
             </div>
             <div class="form-group">
               <label for="osModelo" class="block text-xs font-bold text-gray-600 uppercase mb-1">Veículo/Modelo</label>
@@ -317,67 +403,6 @@
         
         <div class="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-4">
              <a id="lightbox-download" href="#" download class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-3 rounded-full backdrop-blur transition-all" title="Baixar"><i class='bx bxs-download'></i></a>
-        </div>
-    </div>
-  </div>
-  
-  <!-- MODAL ADMIN (CLOUDINARY E USUÁRIOS) -->
-  <div id="adminModal" class="modal fixed inset-0 z-[101] hidden items-center justify-center p-4 bg-black bg-opacity-50">
-    <div class="modal-content w-full max-w-2xl bg-white rounded-xl shadow-xl p-6 h-[80vh] flex flex-col">
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2"><i class='bx bxs-cog'></i> Administração do Sistema</h2>
-            <button class="btn-close-modal text-2xl text-gray-400 hover:text-gray-600">&times;</button>
-        </div>
-        
-        <!-- Abas -->
-        <div class="flex border-b border-gray-200 mb-4">
-            <button class="admin-tab active px-4 py-2 text-blue-600 border-b-2 border-blue-600 font-bold" data-target="tab-cloudinary">Mídia (Cloudinary)</button>
-            <button class="admin-tab px-4 py-2 text-gray-500 hover:text-gray-700" data-target="tab-users">Usuários</button>
-        </div>
-
-        <div class="overflow-y-auto flex-grow">
-            <!-- Aba Cloudinary -->
-            <div id="tab-cloudinary" class="admin-tab-content">
-                <p class="text-sm text-gray-600 mb-4 bg-yellow-50 p-3 rounded border border-yellow-200">
-                    <i class='bx bxs-info-circle'></i> Configure aqui as chaves para upload de fotos.
-                </p>
-                <form id="cloudinaryForm" class="space-y-4">
-                     <div>
-                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Cloud Name</label>
-                         <input id="cloudNameInput" type="text" placeholder="Ex: dyjlxqcnb" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none">
-                     </div>
-                     <div>
-                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Upload Preset (Unsigned)</label>
-                         <input id="uploadPresetInput" type="text" placeholder="Ex: oficina-preset" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none">
-                     </div>
-                     <button type="submit" class="w-full bg-blue-800 hover:bg-blue-900 text-white py-2 rounded font-bold transition-colors">Salvar Configuração de Mídia</button>
-                </form>
-            </div>
-
-            <!-- Aba Usuários -->
-            <div id="tab-users" class="admin-tab-content hidden">
-                <div class="bg-gray-50 p-4 rounded-lg mb-4 border border-gray-200">
-                    <h3 class="font-bold text-gray-700 mb-2">Adicionar Novo Usuário</h3>
-                    <form id="addUserForm" class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <input type="text" id="newUserName" placeholder="Nome Completo" required class="p-2 border rounded">
-                        <select id="newUserRole" class="p-2 border rounded bg-white">
-                            <option value="Colaborador">Colaborador (Básico)</option>
-                            <option value="Mecânico">Mecânico</option>
-                            <option value="Atendente">Atendente (Recepção)</option>
-                            <option value="Gestor">Gestor (Acesso Total)</option>
-                        </select>
-                        <input type="text" id="newUserPass" placeholder="Senha de Acesso" required class="p-2 border rounded">
-                        <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
-                            <i class='bx bx-plus'></i> Adicionar
-                        </button>
-                    </form>
-                </div>
-                
-                <h3 class="font-bold text-gray-700 mb-2 border-b pb-1">Usuários Cadastrados</h3>
-                <div id="usersList" class="space-y-2">
-                    <!-- Lista de usuários renderizada via JS -->
-                </div>
-            </div>
         </div>
     </div>
   </div>
