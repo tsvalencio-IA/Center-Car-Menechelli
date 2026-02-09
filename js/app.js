@@ -100,7 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (!data) {
           // Cria usuário padrão se não existir nenhum
-          const defaultAdmin = { name: 'Thiago Ventura Valencio', role: 'Gestor', password: 'dev' };
+          const defaultAdmin = { name: 'Thiago Ventura Valencio', role: 'Gestor', password: '1940' };
           usersRef.push(defaultAdmin);
           return;
       }
