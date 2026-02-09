@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
@@ -14,10 +14,10 @@
   <link href="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-100 flex flex-col min-h-screen">
 
   <!-- TELA DE LOGIN -->
-  <div id="userScreen" class="flex items-center justify-center min-h-screen p-4 bg-slate-900">
+  <div id="userScreen" class="flex items-center justify-center min-h-screen p-4 bg-slate-900 fixed inset-0 z-[200]">
     <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-sm text-center border-t-8 border-blue-800">
       <h1 class="text-2xl font-bold text-gray-800 mb-1">CENTER CAR</h1>
       <h2 class="text-3xl font-black text-blue-900 mb-2">MENECHELLI</h2>
@@ -40,213 +40,254 @@
         <p id="loginError" class="text-red-500 text-sm mt-4 text-center h-4 font-medium"></p>
       </form>
       
-      <p class="text-xs text-gray-400 mt-8">Licenciado para Center Car Menechelli</p>
+      <div class="mt-8 pt-4 border-t border-gray-100">
+          <p class="text-xs text-gray-400">Desenvolvido por</p>
+          <p class="text-sm font-bold text-blue-900">thIAguinho Soluções 🤖</p>
+      </div>
     </div>
   </div>
 
   <!-- APLICAÇÃO PRINCIPAL -->
-  <div id="app" class="hidden">
+  <div id="app" class="hidden flex-col min-h-screen">
     <header class="bg-white shadow-md sticky top-0 z-40">
-      <div id="attention-panel-container">
-        <div id="attention-panel" class="grid grid-cols-1 sm:grid-cols-2 gap-2 p-2"></div>
+      <!-- Painel de Atenção (Colapsável) -->
+      <div id="attention-panel-container" class="transition-all duration-300 ease-in-out overflow-hidden max-h-0 bg-gray-900">
+        <div id="attention-panel" class="grid grid-cols-1 sm:grid-cols-2 gap-2 p-2 container mx-auto"></div>
       </div>
-      <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center gap-4">
+
+      <!-- Barra de Navegação -->
+      <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center gap-4">
         <div class="flex items-center gap-3">
-            <div>
+            <div class="flex flex-col">
                 <h1 class="text-xl font-black text-blue-900 leading-none">MENECHELLI</h1>
-                <p class="text-xs font-bold text-gray-500 tracking-wide">CENTER CAR</p>
+                <p class="text-[10px] font-bold text-gray-500 tracking-wide">CENTER CAR</p>
             </div>
-            <div id="alert-led" class="hidden"></div>
-            <button id="toggle-panel-btn" class="text-gray-400 hover:text-blue-800 p-1" title="Mostrar/Ocultar Painel de Alertas">
-                <i class='bx bxs-chevron-up text-2xl'></i>
-            </button>
+            
+            <div class="h-8 w-px bg-gray-300 mx-1"></div>
+
+            <div class="flex items-center">
+                <div id="alert-led" class="w-3 h-3 rounded-full bg-red-500 animate-pulse hidden mr-2 shadow-[0_0_8px_rgba(239,68,68,0.8)]"></div>
+                <button id="toggle-panel-btn" class="text-gray-500 hover:text-blue-800 p-1 rounded transition-colors flex items-center gap-1 text-xs font-semibold uppercase bg-gray-100 hover:bg-gray-200 px-2 py-1">
+                    <i class='bx bxs-error-circle text-lg'></i> Alertas
+                    <i class='bx bxs-chevron-down transition-transform duration-300' id="toggle-icon"></i>
+                </button>
+            </div>
         </div>
         
-        <div class="flex-grow max-w-md relative search-container hidden sm:block">
-            <input type="search" id="globalSearchInput" placeholder="Buscar placa, cliente ou OS..." class="w-full p-2 pl-4 text-sm border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm">
-            <div id="globalSearchResults" class="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-b-md shadow-lg z-50 hidden max-h-60 overflow-y-auto"></div>
+        <div class="flex-grow max-w-md relative search-container hidden md:block mx-4">
+            <div class="relative">
+                <i class='bx bx-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg'></i>
+                <input type="search" id="globalSearchInput" placeholder="Buscar placa, cliente ou OS..." class="w-full py-2 pl-10 pr-4 text-sm border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 transition-all focus:bg-white shadow-sm">
+            </div>
+            <div id="globalSearchResults" class="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-b-lg shadow-xl z-50 hidden max-h-80 overflow-y-auto"></div>
         </div>
 
-        <div class="flex items-center gap-3">
-          <button id="addOSBtn" class="btn bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 flex items-center gap-2 shadow-sm">
-            <i class='bx bx-plus-circle text-xl'></i><span class="hidden md:inline">Nova O.S.</span>
+        <div class="flex items-center gap-2 sm:gap-3">
+          <!-- Botão Consultor IA -->
+          <a href="consultor.html" class="btn bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-lg flex items-center gap-2 shadow-md transition-transform active:scale-95 group" title="Consultor Técnico IA">
+            <i class='bx bxs-brain text-xl group-hover:animate-pulse'></i>
+            <span class="hidden lg:inline text-sm font-semibold">thIAguinho</span>
+          </a>
+
+          <button id="addOSBtn" class="btn bg-blue-700 hover:bg-blue-800 text-white px-3 py-2 rounded-lg flex items-center gap-2 shadow-md transition-transform active:scale-95">
+            <i class='bx bx-plus-circle text-xl'></i><span class="hidden lg:inline text-sm font-semibold">Nova O.S.</span>
           </button>
           
-          <button id="adminBtn" class="btn bg-gray-700 hover:bg-gray-800 text-white px-3 py-2 hidden" title="Configurações">
+          <button id="adminBtn" class="btn text-gray-600 hover:text-blue-800 hover:bg-gray-100 p-2 rounded-lg hidden transition-colors" title="Configurações">
               <i class='bx bxs-cog text-xl'></i>
           </button>
-           <button id="reportsBtn" class="btn bg-green-600 hover:bg-green-700 text-white px-3 py-2 hidden" title="Relatórios">
+           <button id="reportsBtn" class="btn text-green-600 hover:text-green-800 hover:bg-green-50 p-2 rounded-lg hidden transition-colors" title="Relatórios">
               <i class='bx bxs-file-pdf text-xl'></i>
           </button>
           
-          <div class="text-right ml-2 border-l pl-3 border-gray-300">
-            <p id="currentUserName" class="font-bold text-gray-800 text-sm"></p>
-            <button id="logoutButton" class="text-xs text-red-500 hover:text-red-700 font-medium">Sair</button>
+          <div class="text-right ml-2 border-l pl-3 border-gray-300 flex flex-col items-end">
+            <p id="currentUserName" class="font-bold text-gray-800 text-xs sm:text-sm leading-tight"></p>
+            <button id="logoutButton" class="text-[10px] text-red-500 hover:text-red-700 font-semibold uppercase tracking-wide hover:underline mt-0.5">Sair</button>
           </div>
         </div>
       </div>
       
       <!-- Busca Mobile -->
-      <div class="sm:hidden px-4 pb-3">
-        <input type="search" id="globalSearchInputMobile" placeholder="Buscar placa..." class="w-full p-2 text-sm border border-gray-300 rounded-md">
+      <div class="md:hidden px-4 pb-3 border-t border-gray-100 pt-2">
+        <div class="relative">
+            <i class='bx bx-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400'></i>
+            <input type="search" id="globalSearchInputMobile" placeholder="Buscar placa..." class="w-full py-2 pl-9 pr-3 text-sm border border-gray-300 rounded-lg bg-gray-50">
+        </div>
       </div>
     </header>
 
-    <main class="container mx-auto p-4 sm:p-6 lg:p-8">
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-6" id="kanbanBoard"></div>
+    <main class="flex-grow container mx-auto p-4 sm:p-6 lg:p-8 overflow-x-hidden">
+      <!-- Kanban Board -->
+      <div class="flex gap-4 overflow-x-auto pb-4 snap-x min-h-[calc(100vh-140px)]" id="kanbanBoard">
+        <!-- Colunas geradas via JS -->
+      </div>
     </main>
+
+    <!-- Rodapé da Aplicação -->
+    <footer class="bg-white border-t border-gray-200 py-3 mt-auto">
+        <div class="container mx-auto px-4 flex justify-between items-center text-xs text-gray-500">
+            <span>© 2026 Center Car Menechelli</span>
+            <span class="flex items-center gap-1">
+                Desenvolvido por <strong class="text-blue-900">thIAguinho Soluções</strong> <i class='bx bxs-bot'></i>
+            </span>
+        </div>
+    </footer>
   </div>
 
   <!-- MODAL NOVA OS -->
-  <div id="osModal" class="modal fixed inset-0 z-50 hidden items-center justify-center p-4">
-    <div class="modal-content w-full max-w-lg">
-      <div class="modal-header bg-blue-900 text-white">
-        <h2 id="osModalTitle" class="text-xl font-bold">Nova Ordem de Serviço</h2>
+  <div id="osModal" class="modal fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black bg-opacity-50 backdrop-blur-sm">
+    <div class="modal-content w-full max-w-lg bg-white rounded-xl shadow-2xl overflow-hidden transform transition-all scale-100">
+      <div class="modal-header bg-blue-900 text-white p-4">
+        <h2 id="osModalTitle" class="text-lg font-bold flex items-center gap-2"><i class='bx bx-file-blank'></i> Nova Ordem de Serviço</h2>
       </div>
       <div class="modal-body p-6">
         <form id="osForm" class="space-y-4">
           <input type="hidden" id="osId">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div class="form-group">
-              <label for="osPlaca" class="block text-sm font-bold text-gray-700 mb-1">Placa</label>
-              <input id="osPlaca" type="text" placeholder="ABC1234" required class="p-2 border rounded w-full uppercase font-mono">
+              <label for="osPlaca" class="block text-xs font-bold text-gray-600 uppercase mb-1">Placa</label>
+              <input id="osPlaca" type="text" placeholder="ABC1234" required class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none uppercase font-mono text-lg">
             </div>
             <div class="form-group">
-              <label for="osModelo" class="block text-sm font-bold text-gray-700 mb-1">Veículo/Modelo</label>
-              <input id="osModelo" type="text" placeholder="Ex: Fiat Toro" required class="p-2 border rounded w-full">
+              <label for="osModelo" class="block text-xs font-bold text-gray-600 uppercase mb-1">Veículo/Modelo</label>
+              <input id="osModelo" type="text" placeholder="Ex: Fiat Toro" required class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none">
             </div>
             <div class="form-group sm:col-span-2">
-              <label for="osCliente" class="block text-sm font-bold text-gray-700 mb-1">Cliente</label>
-              <input id="osCliente" type="text" placeholder="Nome completo" required class="p-2 border rounded w-full">
+              <label for="osCliente" class="block text-xs font-bold text-gray-600 uppercase mb-1">Cliente</label>
+              <input id="osCliente" type="text" placeholder="Nome completo" required class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none">
             </div>
             <div class="form-group">
-              <label for="osTelefone" class="block text-sm font-bold text-gray-700 mb-1">Telefone/WhatsApp</label>
-              <input id="osTelefone" type="tel" placeholder="(00) 00000-0000" class="p-2 border rounded w-full">
+              <label for="osTelefone" class="block text-xs font-bold text-gray-600 uppercase mb-1">Telefone/WhatsApp</label>
+              <input id="osTelefone" type="tel" placeholder="(00) 00000-0000" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none">
             </div>
             <div class="form-group">
-              <label for="osKm" class="block text-sm font-bold text-gray-700 mb-1">KM Atual</label>
-              <input id="osKm" type="number" placeholder="0" class="p-2 border rounded w-full">
+              <label for="osKm" class="block text-xs font-bold text-gray-600 uppercase mb-1">KM Atual</label>
+              <input id="osKm" type="number" placeholder="0" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none">
             </div>
             <div class="form-group sm:col-span-2">
-              <label for="osResponsavel" class="block text-sm font-bold text-gray-700 mb-1">Responsável Técnico</label>
-              <select id="osResponsavel" required class="p-2 border rounded w-full bg-white">
+              <label for="osResponsavel" class="block text-xs font-bold text-gray-600 uppercase mb-1">Responsável Técnico</label>
+              <select id="osResponsavel" required class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none bg-white">
                 <option value="">Selecione...</option>
               </select>
             </div>
             <div class="form-group sm:col-span-2">
-              <label for="osObservacoes" class="block text-sm font-bold text-gray-700 mb-1">Reclamação do Cliente / Defeito</label>
-              <textarea id="osObservacoes" placeholder="Descreva o problema relatado..." rows="3" class="p-2 border rounded w-full"></textarea>
+              <label for="osObservacoes" class="block text-xs font-bold text-gray-600 uppercase mb-1">Reclamação do Cliente</label>
+              <textarea id="osObservacoes" placeholder="Descreva o problema..." rows="3" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none resize-none"></textarea>
             </div>
             <div class="form-group sm:col-span-2">
-                <label class="block text-sm font-bold text-gray-700 mb-2">Prioridade</label>
-                <div class="flex items-center space-x-6">
-                    <label class="flex items-center space-x-2 cursor-pointer bg-green-50 p-2 rounded border border-green-200 w-full justify-center">
-                        <input type="radio" name="osPrioridade" value="verde" class="form-radio h-4 w-4 text-green-600" checked>
-                        <span class="text-sm font-medium text-gray-700">Normal</span>
+                <label class="block text-xs font-bold text-gray-600 uppercase mb-2">Prioridade</label>
+                <div class="flex items-center space-x-4">
+                    <label class="flex-1 flex items-center justify-center space-x-2 cursor-pointer bg-green-50 p-2 rounded border border-green-200 hover:bg-green-100 transition-colors">
+                        <input type="radio" name="osPrioridade" value="verde" class="form-radio h-4 w-4 text-green-600 focus:ring-green-500" checked>
+                        <span class="text-xs font-bold text-green-800">Normal</span>
                     </label>
-                    <label class="flex items-center space-x-2 cursor-pointer bg-yellow-50 p-2 rounded border border-yellow-200 w-full justify-center">
-                        <input type="radio" name="osPrioridade" value="amarelo" class="form-radio h-4 w-4 text-yellow-500">
-                        <span class="text-sm font-medium text-gray-700">Atenção</span>
+                    <label class="flex-1 flex items-center justify-center space-x-2 cursor-pointer bg-yellow-50 p-2 rounded border border-yellow-200 hover:bg-yellow-100 transition-colors">
+                        <input type="radio" name="osPrioridade" value="amarelo" class="form-radio h-4 w-4 text-yellow-500 focus:ring-yellow-500">
+                        <span class="text-xs font-bold text-yellow-800">Atenção</span>
                     </label>
-                    <label class="flex items-center space-x-2 cursor-pointer bg-red-50 p-2 rounded border border-red-200 w-full justify-center">
-                        <input type="radio" name="osPrioridade" value="vermelho" class="form-radio h-4 w-4 text-red-600">
-                        <span class="text-sm font-medium text-gray-700">Urgente</span>
+                    <label class="flex-1 flex items-center justify-center space-x-2 cursor-pointer bg-red-50 p-2 rounded border border-red-200 hover:bg-red-100 transition-colors">
+                        <input type="radio" name="osPrioridade" value="vermelho" class="form-radio h-4 w-4 text-red-600 focus:ring-red-500">
+                        <span class="text-xs font-bold text-red-800">Urgente</span>
                     </label>
                 </div>
             </div>
           </div>
         </form>
       </div>
-      <div class="modal-footer bg-gray-50 p-4 flex justify-end gap-3">
-        <button type="button" class="btn-close-modal btn bg-white border border-gray-300 text-gray-700 px-4 py-2 hover:bg-gray-50">Cancelar</button>
-        <button type="submit" form="osForm" class="btn bg-blue-800 hover:bg-blue-900 text-white px-6 py-2 shadow-md">Salvar O.S.</button>
+      <div class="modal-footer bg-gray-50 p-4 flex justify-end gap-3 border-t border-gray-200">
+        <button type="button" class="btn-close-modal px-4 py-2 bg-white border border-gray-300 rounded text-gray-700 hover:bg-gray-100 font-medium text-sm transition-colors">Cancelar</button>
+        <button type="submit" form="osForm" class="px-6 py-2 bg-blue-800 text-white rounded hover:bg-blue-900 font-bold text-sm shadow-md transition-transform active:scale-95">Salvar O.S.</button>
       </div>
     </div>
   </div>
 
   <!-- MODAL DETALHES -->
-  <div id="detailsModal" class="modal fixed inset-0 z-50 hidden items-center justify-center p-4">
-    <div class="modal-content w-full max-w-6xl h-[90vh] flex flex-col">
-      <div class="modal-header bg-gray-50 border-b">
-        <div class="flex justify-between items-center">
-          <h2 class="text-xl font-bold text-gray-800">Ficha da O.S.</h2>
-          <button class="btn-close-modal text-3xl text-gray-400 hover:text-red-600">&times;</button>
-        </div>
+  <div id="detailsModal" class="modal fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black bg-opacity-60 backdrop-blur-sm">
+    <div class="modal-content w-full max-w-6xl h-[90vh] flex flex-col bg-white rounded-xl shadow-2xl overflow-hidden">
+      <div class="modal-header bg-gray-50 border-b p-4 flex justify-between items-center">
+        <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2"><i class='bx bxs-data'></i> Ficha Técnica</h2>
+        <button class="btn-close-modal text-3xl text-gray-400 hover:text-red-500 transition-colors leading-none">&times;</button>
       </div>
-      <div class="modal-body bg-gray-100 overflow-y-auto">
-        <div class="os-details-container">
-          <div class="os-header bg-white rounded-lg p-6 shadow-sm mb-4">
-             <div id="detailsHeader" class="flex justify-between items-start flex-wrap gap-4"></div>
-            <div id="detailsObservacoes" class="hidden mt-4 pt-4 border-t border-gray-100"></div>
+      
+      <div class="modal-body bg-gray-100 overflow-y-auto p-4 sm:p-6">
+        <div class="os-details-container max-w-7xl mx-auto">
+          
+          <!-- Cabeçalho da OS -->
+          <div class="os-header bg-white rounded-xl p-6 shadow-sm mb-6 border border-gray-200">
+             <div id="detailsHeader" class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4"></div>
+             <div id="detailsObservacoes" class="hidden mt-4 pt-4 border-t border-gray-100 text-sm"></div>
           </div>
           
           <div class="os-content grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- COLUNA ESQUERDA (2/3) -->
+            <!-- COLUNA ESQUERDA (Timeline e Mídia) -->
             <div class="lg:col-span-2 space-y-6">
-               <div class="bg-white rounded-lg shadow-sm p-4">
-                <h3 class="section-title text-blue-900 border-b pb-2 mb-4 font-bold flex items-center gap-2">
-                    <i class='bx bxs-camera'></i> Fotos e Vídeos
+               <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-200">
+                <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100 pb-3 mb-4 flex items-center gap-2">
+                    <i class='bx bxs-camera text-blue-600'></i> Galeria Visual
                 </h3>
-                <div id="thumbnail-grid" class="grid grid-cols-4 gap-2 min-h-[100px] bg-gray-50 rounded p-2"></div>
+                <div id="thumbnail-grid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 min-h-[100px]"></div>
               </div>
 
-              <div class="bg-white rounded-lg shadow-sm p-4">
-                <h3 class="section-title text-blue-900 border-b pb-2 mb-4 font-bold flex items-center gap-2">
-                    <i class='bx bx-list-ul'></i> Histórico de Execução
+              <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-200">
+                <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100 pb-3 mb-4 flex items-center gap-2">
+                    <i class='bx bx-list-ul text-blue-600'></i> Histórico de Serviços
                 </h3>
-                <div id="timelineContainer" class="timeline mt-4 space-y-4 pr-2"></div>
+                <div id="timelineContainer" class="space-y-6 pl-2"></div>
               </div>
             </div>
 
-            <!-- COLUNA DIREITA (1/3) - AÇÕES -->
-            <div class="lg:col-span-1 space-y-4">
-              <div class="bg-white rounded-lg shadow-sm p-4 border-t-4 border-blue-600">
-                  <h3 class="font-bold text-gray-700 mb-3">Nova Atualização</h3>
+            <!-- COLUNA DIREITA (Ações) -->
+            <div class="lg:col-span-1 space-y-6">
+              
+              <!-- Card Nova Atualização -->
+              <div class="bg-white rounded-xl shadow-sm p-5 border-t-4 border-blue-600">
+                  <h3 class="font-bold text-gray-800 mb-3 flex items-center gap-2"><i class='bx bx-edit'></i> Registrar Atividade</h3>
                   <form id="logForm" class="space-y-3">
                     <input type="hidden" id="logOsId">
-                    <textarea id="logDescricao" placeholder="Descreva o que foi feito..." rows="3" required class="p-3 border rounded w-full text-sm bg-gray-50 focus:bg-white transition-colors"></textarea>
+                    <textarea id="logDescricao" placeholder="Descreva o serviço ou observação..." rows="3" required class="w-full p-3 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all resize-none"></textarea>
                     
                     <div class="flex gap-2">
-                      <input id="logPecas" type="text" placeholder="Peças" class="p-2 border rounded w-2/3 text-sm">
-                      <input id="logValor" type="number" step="0.01" placeholder="R$" class="p-2 border rounded w-1/3 text-sm">
+                      <input id="logPecas" type="text" placeholder="Peças (Opcional)" class="w-2/3 p-2 border border-gray-200 rounded text-sm focus:border-blue-400 outline-none">
+                      <input id="logValor" type="number" step="0.01" placeholder="R$ 0,00" class="w-1/3 p-2 border border-gray-200 rounded text-sm focus:border-blue-400 outline-none">
                     </div>
 
-                    <div class="grid grid-cols-2 gap-2">
-                        <button type="button" id="openCameraBtn" class="btn bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 text-sm flex items-center justify-center gap-1">
-                            <i class='bx bxs-camera'></i> Câmera
+                    <div class="grid grid-cols-2 gap-2 pt-1">
+                        <button type="button" id="openCameraBtn" class="py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-colors">
+                            <i class='bx bxs-camera text-lg'></i> Câmera
                         </button>
-                        <button type="button" id="openGalleryBtn" class="btn bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 text-sm flex items-center justify-center gap-1">
-                            <i class='bx bxs-image'></i> Galeria
+                        <button type="button" id="openGalleryBtn" class="py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-colors">
+                            <i class='bx bxs-image text-lg'></i> Galeria
                         </button>
                     </div>
                     <input id="media-input" type="file" class="hidden" multiple accept="image/*,video/*,application/pdf">
-                    <p id="fileName" class="text-xs text-blue-600 font-semibold h-4"></p>
+                    <p id="fileName" class="text-xs text-blue-600 font-semibold h-4 truncate"></p>
 
-                    <button type="submit" class="w-full btn bg-blue-600 hover:bg-blue-700 text-white py-2 font-bold shadow-sm flex justify-center items-center gap-2">
-                      <i class='bx bx-send'></i> Registrar
+                    <button type="submit" class="w-full py-2.5 bg-blue-700 hover:bg-blue-800 text-white rounded-lg font-bold shadow-md flex justify-center items-center gap-2 transition-transform active:scale-95">
+                      <i class='bx bx-send'></i> Salvar Registro
                     </button>
                   </form>
                   
-                  <div id="post-log-actions" class="hidden mt-4 pt-3 border-t space-y-2">
-                    <p class="text-xs text-center text-gray-500 mb-2">Mover para qual etapa?</p>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button id="btn-move-prev" class="btn bg-gray-500 hover:bg-gray-600 text-white text-xs">Retroceder</button>
-                        <button id="btn-move-next" class="btn bg-green-600 hover:bg-green-700 text-white text-xs">Avançar</button>
+                  <div id="post-log-actions" class="hidden mt-4 pt-4 border-t border-gray-100">
+                    <p class="text-xs text-center text-gray-500 mb-3 font-medium">O status do veículo mudou?</p>
+                    <div class="grid grid-cols-2 gap-2 mb-2">
+                        <button id="btn-move-prev" class="py-2 bg-gray-500 hover:bg-gray-600 text-white text-xs font-bold rounded flex items-center justify-center gap-1"><i class='bx bx-left-arrow-alt'></i> Retroceder</button>
+                        <button id="btn-move-next" class="py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded flex items-center justify-center gap-1">Avançar <i class='bx bx-right-arrow-alt'></i></button>
                     </div>
-                    <button id="btn-stay" class="w-full btn bg-gray-100 text-gray-600 text-xs hover:bg-gray-200">Manter Status</button>
+                    <button id="btn-stay" class="w-full py-2 bg-gray-100 text-gray-600 text-xs font-bold rounded hover:bg-gray-200">Manter no Status Atual</button>
                   </div>
               </div>
               
-              <div class="bg-white rounded-lg shadow-sm p-4">
-                  <h4 class="font-bold text-gray-700 mb-2 text-sm">Ações Rápidas</h4>
-                  <form id="kmUpdateForm" class="flex gap-2 mb-3">
-                      <input id="updateKmInput" type="number" placeholder="Atualizar KM" class="p-2 border rounded w-full text-sm">
-                      <button type="submit" class="btn bg-gray-200 hover:bg-blue-100 text-blue-700 px-3"><i class='bx bx-save'></i></button>
+              <!-- Card Ações Rápidas -->
+              <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-200">
+                  <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Ações Rápidas</h4>
+                  <form id="kmUpdateForm" class="flex gap-2 mb-4">
+                      <input id="updateKmInput" type="number" placeholder="Nova KM" class="flex-grow p-2 border border-gray-200 rounded text-sm focus:border-blue-400 outline-none">
+                      <button type="submit" class="bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 rounded border border-blue-200 transition-colors" title="Salvar KM"><i class='bx bx-save text-lg'></i></button>
                   </form>
-                  <button id="exportOsBtn" class="w-full btn border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm mb-2 flex items-center justify-center gap-2">
+                  <button id="exportOsBtn" class="w-full py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg text-sm font-medium mb-2 flex items-center justify-center gap-2 transition-colors">
                     <i class='bx bx-printer'></i> Imprimir Ficha
                   </button>
-                  <button id="deleteOsBtn" class="w-full btn bg-red-50 text-red-600 hover:bg-red-100 text-sm flex items-center justify-center gap-2 hidden">
+                  <button id="deleteOsBtn" class="w-full py-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg text-sm font-medium flex items-center justify-center gap-2 hidden transition-colors">
                     <i class='bx bx-trash'></i> Excluir O.S.
                   </button>
               </div>
@@ -257,62 +298,83 @@
     </div>
   </div>
 
-  <!-- LIGHTBOX, MODAIS DE CONFIRMAÇÃO E RELATÓRIOS (Mantidos da estrutura original, ocultos por padrão) -->
-  <div id="lightbox" class="modal fixed inset-0 z-[100] hidden items-center justify-center p-4 bg-black bg-opacity-90">
+  <!-- LIGHTBOX -->
+  <div id="lightbox" class="modal fixed inset-0 z-[100] hidden items-center justify-center bg-black bg-opacity-95 backdrop-blur-md">
     <div class="relative w-full h-full flex items-center justify-center">
-        <div id="lightbox-content" class="max-w-full max-h-full"></div>
-        <button id="lightbox-close" class="absolute top-4 right-4 text-white text-4xl">&times;</button>
-        <button id="lightbox-prev" class="absolute left-4 text-white text-4xl bg-black bg-opacity-50 rounded-full p-2"><i class='bx bx-chevron-left'></i></button>
-        <button id="lightbox-next" class="absolute right-4 text-white text-4xl bg-black bg-opacity-50 rounded-full p-2"><i class='bx bx-chevron-right'></i></button>
+        <div id="lightbox-content" class="max-w-[90vw] max-h-[90vh] flex items-center justify-center"></div>
+        
+        <button id="lightbox-close" class="absolute top-4 right-4 text-white text-4xl hover:text-gray-300 z-50">&times;</button>
+        <button id="lightbox-prev" class="absolute left-4 top-1/2 -translate-y-1/2 text-white text-4xl bg-white bg-opacity-10 hover:bg-opacity-20 rounded-full p-2 backdrop-blur-sm transition-all"><i class='bx bx-chevron-left'></i></button>
+        <button id="lightbox-next" class="absolute right-4 top-1/2 -translate-y-1/2 text-white text-4xl bg-white bg-opacity-10 hover:bg-opacity-20 rounded-full p-2 backdrop-blur-sm transition-all"><i class='bx bx-chevron-right'></i></button>
+        
+        <div class="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-4">
+             <a id="lightbox-download" href="#" download class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-3 rounded-full backdrop-blur transition-all" title="Baixar"><i class='bx bxs-download'></i></a>
+        </div>
     </div>
   </div>
   
   <!-- Modal Admin (Cloudinary) -->
-  <div id="adminModal" class="modal fixed inset-0 z-[101] hidden items-center justify-center p-4">
-    <div class="modal-content w-full max-w-md bg-white rounded-lg shadow-xl p-6">
-        <h2 class="text-xl font-bold mb-4">Configuração de Mídia</h2>
+  <div id="adminModal" class="modal fixed inset-0 z-[101] hidden items-center justify-center p-4 bg-black bg-opacity-50">
+    <div class="modal-content w-full max-w-md bg-white rounded-xl shadow-xl p-6">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-bold text-gray-800">Configuração de Mídia</h2>
+            <button class="btn-close-modal text-2xl text-gray-400 hover:text-gray-600">&times;</button>
+        </div>
         <form id="cloudinaryForm" class="space-y-4">
-             <input id="cloudNameInput" type="text" placeholder="Cloud Name" required class="p-2 border rounded w-full">
-             <input id="uploadPresetInput" type="text" placeholder="Upload Preset" required class="p-2 border rounded w-full">
-             <button type="submit" class="btn bg-blue-600 text-white w-full py-2 rounded">Salvar Configuração</button>
+             <div>
+                 <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Cloud Name</label>
+                 <input id="cloudNameInput" type="text" placeholder="Ex: dyjlxqcnb" required class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none">
+             </div>
+             <div>
+                 <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Upload Preset (Unsigned)</label>
+                 <input id="uploadPresetInput" type="text" placeholder="Ex: oficina-preset" required class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none">
+             </div>
+             <button type="submit" class="w-full bg-blue-800 hover:bg-blue-900 text-white py-2 rounded font-bold transition-colors">Salvar Configuração</button>
         </form>
-        <button class="btn-close-modal mt-4 text-gray-500 w-full">Fechar</button>
     </div>
   </div>
 
   <!-- Modal Relatórios -->
-  <div id="reportsModal" class="modal fixed inset-0 z-[101] hidden items-center justify-center p-4">
-    <div class="modal-content w-full max-w-4xl bg-white rounded-lg shadow-xl p-6">
-        <div class="flex justify-between mb-4">
-            <h2 class="text-xl font-bold">Relatórios</h2>
-            <button class="btn-close-modal text-2xl">&times;</button>
+  <div id="reportsModal" class="modal fixed inset-0 z-[101] hidden items-center justify-center p-4 bg-black bg-opacity-50">
+    <div class="modal-content w-full max-w-4xl bg-white rounded-xl shadow-xl p-6 flex flex-col max-h-[90vh]">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold text-gray-800"><i class='bx bxs-report text-green-600'></i> Relatório de Entregas</h2>
+            <button class="btn-close-modal text-2xl text-gray-400 hover:text-gray-600">&times;</button>
         </div>
-        <form id="reportsForm" class="flex gap-4 mb-4">
-            <input type="date" id="startDate" class="border p-2 rounded">
-            <input type="date" id="endDate" class="border p-2 rounded">
-            <button type="submit" class="bg-blue-600 text-white px-4 rounded">Filtrar</button>
+        <form id="reportsForm" class="flex flex-wrap items-end gap-4 mb-4 bg-gray-50 p-4 rounded-lg border border-gray-100">
+            <div class="flex-grow">
+                <label class="block text-xs font-bold text-gray-500 mb-1">Data Início</label>
+                <input type="date" id="startDate" required class="w-full p-2 border rounded text-sm">
+            </div>
+            <div class="flex-grow">
+                <label class="block text-xs font-bold text-gray-500 mb-1">Data Fim</label>
+                <input type="date" id="endDate" required class="w-full p-2 border rounded text-sm">
+            </div>
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded text-sm font-bold shadow-sm">Filtrar</button>
         </form>
-        <div id="reportsResultContainer" class="overflow-y-auto max-h-96"></div>
-        <button id="exportReportBtn" class="hidden mt-4 bg-green-600 text-white px-4 py-2 rounded">Exportar PDF</button>
+        <div id="reportsResultContainer" class="overflow-y-auto flex-grow border border-gray-100 rounded-lg"></div>
+        <div class="mt-4 flex justify-end">
+            <button id="exportReportBtn" class="hidden bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded font-bold shadow-md flex items-center gap-2"><i class='bx bxs-file-pdf'></i> Exportar PDF</button>
+        </div>
     </div>
   </div>
   
-  <!-- Modais de Confirmação (Delete) -->
-  <div id="confirmDeleteModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-[110] flex items-center justify-center">
-      <div class="bg-white p-6 rounded shadow-lg max-w-sm text-center">
-          <p id="confirmDeleteText" class="mb-4">Confirmar exclusão?</p>
-          <div class="flex justify-center gap-4">
-              <button id="cancelDeleteBtn" class="bg-gray-300 px-4 py-2 rounded">Cancelar</button>
-              <button id="confirmDeleteBtn" class="bg-red-600 text-white px-4 py-2 rounded">Excluir</button>
+  <!-- Modal Confirmação -->
+  <div id="confirmDeleteModal" class="hidden fixed inset-0 bg-black bg-opacity-60 z-[110] flex items-center justify-center p-4 backdrop-blur-sm">
+      <div class="bg-white p-6 rounded-xl shadow-2xl max-w-sm text-center transform scale-100">
+          <i class='bx bxs-error-circle text-5xl text-red-500 mb-3'></i>
+          <h3 class="text-lg font-bold text-gray-800 mb-2">Tem certeza?</h3>
+          <p id="confirmDeleteText" class="text-gray-600 mb-6 text-sm">Essa ação não pode ser desfeita.</p>
+          <div class="flex justify-center gap-3">
+              <button id="cancelDeleteBtn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded font-medium transition-colors">Cancelar</button>
+              <button id="confirmDeleteBtn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-medium shadow-md transition-colors">Sim, Excluir</button>
           </div>
       </div>
   </div>
 
-  <!-- Repetir estrutura simples para Media e Log se necessário via JS -->
-
+  <!-- Scripts -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-  <!-- REMOVIDO: firebase-storage.js pois não será utilizado -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf-autotable.min.js"></script>
   <script src="js/app.js"></script>
