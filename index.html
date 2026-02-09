@@ -19,7 +19,7 @@
   <!-- TELA DE LOGIN -->
   <div id="userScreen" class="flex items-center justify-center min-h-screen p-4 bg-slate-900 fixed inset-0 z-[200]">
     <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-sm text-center border-t-8 border-blue-800 relative">
-      <div class="absolute top-0 right-0 bg-yellow-400 text-blue-900 text-xs font-bold px-2 py-1 rounded-bl-lg">v3.0 PRO</div>
+      <div class="absolute top-0 right-0 bg-yellow-400 text-blue-900 text-xs font-bold px-2 py-1 rounded-bl-lg">v3.1 PRO</div>
       <h1 class="text-2xl font-bold text-gray-800 mb-1">CENTER CAR</h1>
       <h2 class="text-3xl font-black text-blue-900 mb-2">MENECHELLI</h2>
       <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-6">Sistema de Gestão Inteligente</p>
@@ -207,6 +207,12 @@
                         Salvar Configuração
                      </button>
                 </form>
+                <div class="mt-8">
+                    <h3 class="font-bold text-gray-700 mb-3 text-xs uppercase tracking-wider">Status Atual</h3>
+                    <div id="activeCloudinaryInfo" class="text-sm font-mono bg-white p-4 rounded-lg border border-gray-200 shadow-sm text-gray-600 flex items-center gap-3">
+                        <i class='bx bx-loader-alt bx-spin'></i> Verificando configuração...
+                    </div>
+                </div>
             </div>
         </div>
     </div>
