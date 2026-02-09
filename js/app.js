@@ -1,687 +1,665 @@
 /* ==================================================================
-   DASHBOARD OFICINA PRO - V2.0 (SaaS Ready)
-   Desenvolvido por: Thiago Ventura Valencio
-   Funcionalidades: Kanban, Upload Cloudinary Dinâmico, IA Gemini,
-   Gestão de Usuários e Permissões.
-==================================================================
-*/
+   DASHBOARD CENTER CAR MENECHELLI - SETUP INICIAL
+   ================================================================== */
 
-/* --- 1. CONFIGURAÇÃO INICIAL DO FIREBASE --- */
-// (Mantenha suas configurações originais aqui. Em um SaaS real, isso viria de env vars na build,
-// mas para este projeto cliente-side, mantemos hardcoded para conectar ao seu projeto)
+// 1. COLE AQUI AS CHAVES DO NOVO PROJETO FIREBASE (Center-Car-Menechelli)
 const firebaseConfig = {
-    apiKey: "AIzaSyB5JpYm8l0AlF5ZG3HtkyFZgmrpsUrDhv0",
-    authDomain: "dashboard-oficina-pro.firebaseapp.com",
-    databaseURL: "https://dashboard-oficina-pro-default-rtdb.firebaseio.com",
-    projectId: "dashboard-oficina-pro",
-    storageBucket: "dashboard-oficina-pro.appspot.com",
-    messagingSenderId: "736157192887",
-    appId: "1:736157192887:web:c23d3daade848a33d67332"
+  apiKey: "AIzaSyDFbvRiLpUcXFJgVSwNobXi0fX_IceBK5k",
+  authDomain: "centercarmenechelli-47e05.firebaseapp.com",
+  databaseURL: "https://centercarmenechelli-47e05-default-rtdb.firebaseio.com",
+  projectId: "centercarmenechelli-47e05",
+  storageBucket: "centercarmenechelli-47e05.firebasestorage.app",
+  messagingSenderId: "697435506647",
+  appId: "1:697435506647:web:dce5cbf910f4960f732d92"
 };
 
-// Inicializa Firebase se ainda não foi
-if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-}
-const db = firebase.database();
-
-/* --- 2. ESTADO GLOBAL DA APLICAÇÃO --- */
-let currentUser = null; // Usuário logado
-let systemConfig = {};  // Configurações (Chaves API, Nome da Oficina)
-let allUsers = {};      // Lista de usuários para Admin
-
-// Definição de Perfis de Acesso
-const ROLES = {
-    admin: {
-        canDelete: true,
-        canEditConfig: true,
-        canManageUsers: true,
-        canExportReports: true,
-        label: "Administrador (DEV)"
-    },
-    gerente: {
-        canDelete: false,
-        canEditConfig: false,
-        canManageUsers: true,
-        canExportReports: true,
-        label: "Gerente"
-    },
-    colaborador: {
-        canDelete: false,
-        canEditConfig: false,
-        canManageUsers: false,
-        canExportReports: false,
-        label: "Colaborador"
-    }
-};
-
-/* --- 3. INICIALIZAÇÃO E AUTENTICAÇÃO --- */
-
-document.addEventListener("DOMContentLoaded", async () => {
-    // 1. Busca configurações do sistema (Chaves API)
-    await loadSystemConfig();
-    
-    // 2. Busca usuários cadastrados
-    await loadUsers();
-});
-
-async function loadSystemConfig() {
-    const configRef = db.ref('system_config');
-    configRef.on('value', (snapshot) => {
-        const val = snapshot.val();
-        if (val) {
-            systemConfig = val;
-            updateUIWithConfig();
-        } else {
-            // Se não existir config, cria o padrão (Primeiro uso)
-            createDefaultConfig();
-        }
-    });
-}
-
-function createDefaultConfig() {
-    const defaultConfig = {
-        shopName: "CHEVRON Bosch Service",
-        apiKeys: {
-            cloudinary_cloud_name: "", // Preencher no painel admin
-            cloudinary_upload_preset: "",
-            gemini_api_key: ""
-        }
-    };
-    db.ref('system_config').set(defaultConfig);
-}
-
-function updateUIWithConfig() {
-    // Atualiza títulos da página com o nome da oficina
-    if(systemConfig.shopName) {
-        document.querySelectorAll('h1').forEach(el => {
-            if(el.textContent.includes('CHEVRON')) el.textContent = systemConfig.shopName;
-        });
-    }
-    // Remove loading
-    const loader = document.getElementById('loadingConfig');
-    if(loader) loader.style.display = 'none';
-    
-    const userList = document.getElementById('userList');
-    if(userList) userList.classList.remove('hidden');
-}
-
-async function loadUsers() {
-    const usersRef = db.ref('users');
-    usersRef.on('value', (snapshot) => {
-        allUsers = snapshot.val() || {};
-        renderUserSelectionScreen(allUsers);
-        
-        // Se a lista estiver vazia (primeiro uso), cria o Super Admin
-        if (Object.keys(allUsers).length === 0) {
-            createSuperAdmin();
-        }
-    });
-}
-
-function createSuperAdmin() {
-    const devUser = {
-        name: "Thiago Ventura Valencio",
-        role: "admin",
-        avatar: "images/avatar_dev.png",
-        pin: "0000" // Opcional para futuro
-    };
-    db.ref('users').push(devUser);
-}
-
-function renderUserSelectionScreen(users) {
-    const container = document.getElementById('userList');
-    container.innerHTML = '';
-
-    Object.entries(users).forEach(([key, user]) => {
-        const btn = document.createElement('button');
-        btn.className = "w-full bg-gray-50 hover:bg-blue-50 border border-gray-200 text-gray-800 font-semibold py-3 px-4 rounded-lg shadow-sm transition-all mb-2 flex items-center gap-3";
-        
-        // Avatar simples baseado nas iniciais
-        const initials = user.name.substring(0,2).toUpperCase();
-        
-        btn.innerHTML = `
-            <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs">
-                ${initials}
-            </div>
-            <div class="text-left flex-1">
-                <div class="text-sm font-bold">${user.name}</div>
-                <div class="text-xs text-gray-500">${ROLES[user.role]?.label || 'Colaborador'}</div>
-            </div>
-            <i class='bx bx-chevron-right text-gray-400'></i>
-        `;
-        
-        btn.onclick = () => loginUser(key, user);
-        container.appendChild(btn);
-    });
-}
-
-function loginUser(userId, userData) {
-    currentUser = { id: userId, ...userData };
-    
-    // Configura permissões baseadas no cargo
-    currentUser.permissions = ROLES[currentUser.role] || ROLES['colaborador'];
-
-    document.getElementById('userScreen').classList.add('hidden');
-    document.getElementById('app').classList.remove('hidden');
-    
-    document.getElementById('currentUserDisplay').textContent = currentUser.name;
-    
-    // Configura UI baseada em permissões
-    setupPermissionsUI();
-    
-    // Inicia o app principal
-    initKanbanBoard();
-}
-
-function setupPermissionsUI() {
-    const adminBtn = document.getElementById('btnAdminPanel');
-    const deleteBtn = document.getElementById('btnDeleteOS');
-    const reportsBtn = document.getElementById('btnReports');
-
-    // Botão Admin
-    if (currentUser.permissions.canEditConfig) {
-        adminBtn.classList.remove('hidden');
-    } else {
-        adminBtn.classList.add('hidden');
-    }
-
-    // Botão Deletar OS (no modal)
-    if (currentUser.permissions.canDelete) {
-        deleteBtn.classList.remove('hidden');
-    } else {
-        deleteBtn.classList.add('hidden');
-    }
-}
-
-document.getElementById('btnLogout').addEventListener('click', () => {
-    window.location.reload();
-});
-
-/* --- 4. CLOUDINARY UPLOAD (CORRIGIDO E OTIMIZADO) --- */
-
-async function uploadFileToCloudinary(file) {
-    // Validação de Chaves
-    if (!systemConfig.apiKeys || !systemConfig.apiKeys.cloudinary_cloud_name) {
-        alert("ERRO: Chaves do Cloudinary não configuradas no Painel Admin.");
-        throw new Error("Missing Cloudinary Config");
-    }
-
-    // 1. Sanitização das chaves (Remove espaços em branco que causaram o erro anterior)
-    const cloudName = systemConfig.apiKeys.cloudinary_cloud_name.trim();
-    const uploadPreset = systemConfig.apiKeys.cloudinary_upload_preset.trim();
-
-    if (!cloudName || !uploadPreset) {
-        alert("ERRO: Cloud Name ou Preset vazios.");
-        return;
-    }
-
-    const url = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
-    
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('upload_preset', uploadPreset);
-    // Tags ajudam a organizar no painel do Cloudinary
-    formData.append('tags', `oficina,${currentUser.name}`); 
-
-    // UI Feedback
-    const progressDiv = document.getElementById('uploadProgress');
-    const progressBar = progressDiv.querySelector('div');
-    progressDiv.classList.remove('hidden');
-    progressBar.style.width = '30%';
-
-    try {
-        const response = await fetch(url, {
-            method: 'POST',
-            body: formData
-        });
-
-        progressBar.style.width = '80%';
-
-        if (!response.ok) {
-            const errData = await response.json();
-            throw new Error(errData.error.message);
-        }
-
-        const data = await response.json();
-        progressBar.style.width = '100%';
-        
-        setTimeout(() => progressDiv.classList.add('hidden'), 500);
-        
-        return data.secure_url;
-
-    } catch (error) {
-        progressDiv.classList.add('hidden');
-        console.error('Upload Error:', error);
-        alert(`Falha no envio da imagem: ${error.message}`);
-        throw error;
-    }
-}
-
-/* --- 5. LÓGICA DO KANBAN E ORDEM DE SERVIÇO --- */
-
-const STATUS_COLUMNS = [
-    { id: 'aguardando_mecanico', title: 'Aguardando Mecânico', color: 'border-l-4 border-yellow-400' },
-    { id: 'em_analise', title: 'Em Análise', color: 'border-l-4 border-blue-400' },
-    { id: 'orcamento_enviado', title: 'Orçamento Enviado', color: 'border-l-4 border-purple-400' },
-    { id: 'aguardando_aprovacao', title: 'Aguardando Aprovação', color: 'border-l-4 border-orange-400' },
-    { id: 'servico_autorizado', title: 'Serviço Autorizado', color: 'border-l-4 border-green-400' },
-    { id: 'em_execucao', title: 'Em Execução', color: 'border-l-4 border-indigo-500' },
-    { id: 'finalizado_retirada', title: 'Finalizado / Aguardando Retirada', color: 'border-l-4 border-teal-500' },
-    { id: 'entregue', title: 'Entregue', color: 'border-l-4 border-gray-500' }
+/* ==================================================================
+   CONFIGURAÇÃO DE USUÁRIOS (Menechelli)
+================================================================== */
+const USERS = [
+  // GESTORES
+  { name: 'Admin Menechelli', role: 'Gestor', password: 'admin' }, 
+  { name: 'Gerente Oficina', role: 'Gestor', password: '1234' },
+  
+  // ATENDENTES
+  { name: 'Recepção 01', role: 'Atendente', password: '1234' },
+  
+  // MECÂNICOS
+  { name: 'Mecânico 01', role: 'Mecânico', password: '1234' },
+  { name: 'Mecânico 02', role: 'Mecânico', password: '1234' },
+  { name: 'Eletricista', role: 'Mecânico', password: '1234' }
 ];
 
-let currentEditingOsId = null;
+// Usuários com permissão "Super Admin" (podem deletar mídia e acessar config)
+const USERS_CAN_DELETE_MEDIA = ['Admin Menechelli', 'Gerente Oficina'];
 
-function initKanbanBoard() {
-    const board = document.getElementById('kanbanBoard');
-    board.innerHTML = '';
+/* ==================================================================
+   LÓGICA DO SISTEMA (CLOUDINARY + REALTIME DATABASE)
+================================================================== */
 
-    STATUS_COLUMNS.forEach(col => {
-        const colDiv = document.createElement('div');
-        colDiv.className = "min-w-[300px] w-[300px] flex flex-col h-full bg-gray-200 rounded-xl shadow-inner";
-        
-        colDiv.innerHTML = `
-            <div class="p-3 font-bold text-gray-700 flex justify-between items-center bg-gray-300 rounded-t-xl">
-                ${col.title}
-                <span class="bg-white text-xs px-2 py-1 rounded-full shadow-sm count-badge" id="count-${col.id}">0</span>
-            </div>
-            <div class="flex-1 p-2 overflow-y-auto custom-scrollbar space-y-2 kanban-column" id="col-${col.id}" data-status="${col.id}">
-                <!-- Cards aqui -->
-            </div>
-        `;
-        board.appendChild(colDiv);
+let activeCloudinaryConfig = null;
+let allCloudinaryConfigs = {};
+
+function showNotification(message, type = 'success') {
+  const existing = document.getElementById('notification');
+  if (existing) existing.remove();
+  
+  const notification = document.createElement('div');
+  notification.id = 'notification';
+  notification.className = `notification ${type}`;
+  notification.textContent = message;
+  document.body.appendChild(notification);
+  
+  setTimeout(() => notification.classList.add('show'), 10);
+  setTimeout(() => {
+    notification.classList.remove('show');
+    setTimeout(() => { if(document.body.contains(notification)) notification.remove(); }, 500);
+  }, 4000);
+}
+
+const uploadFileToCloudinary = async (file) => {
+  if (!activeCloudinaryConfig) {
+    throw new Error('Configuração de mídia não encontrada. Acesse o Admin (Engrenagem) para configurar.');
+  }
+
+  const { cloudName, uploadPreset } = activeCloudinaryConfig;
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', uploadPreset);
+
+  try {
+    const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
+      method: 'POST',
+      body: formData
     });
 
-    loadWorkOrders();
-}
-
-function loadWorkOrders() {
-    const osRef = db.ref('work_orders');
-    
-    osRef.on('value', (snapshot) => {
-        // Limpa colunas
-        STATUS_COLUMNS.forEach(c => {
-            document.getElementById(`col-${c.id}`).innerHTML = '';
-            document.getElementById(`count-${c.id}`).textContent = '0';
-        });
-
-        const data = snapshot.val();
-        if (!data) return;
-
-        Object.entries(data).forEach(([id, os]) => {
-            const card = createCardElement(id, os);
-            const col = document.getElementById(`col-${os.status}`);
-            if (col) {
-                col.appendChild(card);
-            }
-        });
-
-        // Atualiza contadores
-        STATUS_COLUMNS.forEach(c => {
-            const count = document.getElementById(`col-${c.id}`).children.length;
-            document.getElementById(`count-${c.id}`).textContent = count;
-        });
-    });
-}
-
-function createCardElement(id, os) {
-    const div = document.createElement('div');
-    div.className = "bg-white p-4 rounded-lg shadow cursor-pointer hover:shadow-md transition-shadow border-l-4 " + 
-                    (STATUS_COLUMNS.find(c => c.id === os.status)?.color || 'border-gray-500');
-    
-    // Verifica se tem placa, senão mostra um placeholder
-    const placaDisplay = os.placa || "SEM PLACA";
-    const modeloDisplay = os.modelo || "Veículo não ident.";
-
-    div.innerHTML = `
-        <div class="flex justify-between items-start mb-1">
-            <span class="font-bold text-lg text-gray-800">${placaDisplay}</span>
-            <i class='bx bx-dots-vertical-rounded text-gray-400'></i>
-        </div>
-        <div class="text-sm font-medium text-gray-600 mb-2">${modeloDisplay}</div>
-        <div class="text-xs text-gray-400 flex items-center gap-1">
-            <i class='bx bxs-user'></i> ${os.cliente || 'Consumidor'}
-        </div>
-        ${os.km ? `<div class="text-xs text-gray-400 mt-1">KM: ${os.km}</div>` : ''}
-    `;
-
-    div.onclick = () => openOSModal(id, os);
-
-    // Permitir Drag and Drop (Simplificado para Mobile/Touch)
-    // Para uma versão futura, implementaremos drag and drop visual.
-    // Por enquanto, a mudança de status é feita dentro do modal.
-
-    return div;
-}
-
-/* --- 6. MODAL DE ORDEM DE SERVIÇO --- */
-
-const modalOS = document.getElementById('modalOS');
-const formOS = document.getElementById('formOS');
-
-document.getElementById('btnNewOS').addEventListener('click', () => {
-    currentEditingOsId = null;
-    formOS.reset();
-    document.getElementById('modalTitle').textContent = "Nova Ordem de Serviço";
-    document.getElementById('mediaGallery').innerHTML = '<p class="col-span-3 text-center text-sm text-gray-400">Nenhuma mídia adicionada</p>';
-    document.getElementById('historyFeed').innerHTML = '';
-    document.getElementById('btnDeleteOS').classList.add('hidden');
-    
-    modalOS.classList.remove('hidden');
-});
-
-// Fechar Modais
-document.querySelectorAll('.btn-close-modal').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-        e.target.closest('.modal-overlay').classList.add('hidden');
-    });
-});
-
-function openOSModal(id, os) {
-    currentEditingOsId = id;
-    document.getElementById('modalTitle').textContent = `Editar O.S. - ${os.placa}`;
-    
-    // Preencher campos
-    document.getElementById('placa').value = os.placa || '';
-    document.getElementById('modelo').value = os.modelo || '';
-    document.getElementById('cliente').value = os.cliente || '';
-    document.getElementById('telefone').value = os.telefone || '';
-    document.getElementById('km').value = os.km || '';
-    document.getElementById('reclamacao').value = os.reclamacao || '';
-
-    // Renderizar Galeria
-    renderGallery(os.media || []);
-    
-    // Renderizar Histórico
-    renderHistory(os.history || []);
-
-    // Botão de Deletar (Check Permissão)
-    if(currentUser.permissions.canDelete) {
-        document.getElementById('btnDeleteOS').classList.remove('hidden');
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error.message || 'Falha no upload.');
     }
 
-    modalOS.classList.remove('hidden');
-}
-
-// Salvar OS
-formOS.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const formData = new FormData(formOS);
-    const osData = {
-        placa: formData.get('placa').toUpperCase(),
-        modelo: formData.get('modelo'),
-        cliente: formData.get('cliente'),
-        telefone: formData.get('telefone'),
-        km: formData.get('km'),
-        reclamacao: formData.get('reclamacao'),
-        updatedAt: firebase.database.ServerValue.TIMESTAMP
-    };
-
-    if (!currentEditingOsId) {
-        // Nova OS
-        osData.createdAt = firebase.database.ServerValue.TIMESTAMP;
-        osData.status = 'aguardando_mecanico';
-        osData.createdBy = currentUser.name;
-        
-        // Histórico Inicial
-        osData.history = [{
-            date: new Date().toISOString(),
-            user: currentUser.name,
-            action: "Criação da O.S.",
-            note: "Ordem de serviço aberta."
-        }];
-        
-        await db.ref('work_orders').push(osData);
-    } else {
-        // Atualizar OS
-        await db.ref(`work_orders/${currentEditingOsId}`).update(osData);
-    }
-
-    modalOS.classList.add('hidden');
-    // showNotification("O.S. salva com sucesso!", "success");
-});
-
-// Deletar OS
-document.getElementById('btnDeleteOS').addEventListener('click', async () => {
-    if (!currentEditingOsId) return;
-    if (confirm("Tem certeza que deseja excluir esta O.S.? Esta ação é irreversível.")) {
-        await db.ref(`work_orders/${currentEditingOsId}`).remove();
-        modalOS.classList.add('hidden');
-    }
-});
-
-/* --- 7. GERENCIAMENTO DE MÍDIA E HISTÓRICO --- */
-
-// Listener para Inputs de Arquivo
-['cameraInput', 'galleryInput'].forEach(inputId => {
-    document.getElementById(inputId).addEventListener('change', async (e) => {
-        if (e.target.files.length > 0) {
-            const file = e.target.files[0];
-            try {
-                const url = await uploadFileToCloudinary(file);
-                await addMediaToOS(url);
-            } catch (err) {
-                console.error(err);
-                // Erro já tratado no uploadFileToCloudinary com alert
-            }
-        }
-    });
-});
-
-async function addMediaToOS(url) {
-    if (!currentEditingOsId) {
-        alert("Salve a O.S. pela primeira vez antes de adicionar fotos.");
-        return;
-    }
-    
-    // Busca mídia atual e adiciona nova
-    const snapshot = await db.ref(`work_orders/${currentEditingOsId}/media`).once('value');
-    const currentMedia = snapshot.val() || [];
-    currentMedia.push({
-        url: url,
-        uploadedAt: new Date().toISOString(),
-        user: currentUser.name
-    });
-    
-    await db.ref(`work_orders/${currentEditingOsId}`).update({ media: currentMedia });
-    
-    // Atualiza histórico
-    addHistoryEntry("Adicionou uma foto", "Nova imagem anexada à galeria.");
-    
-    renderGallery(currentMedia);
-}
-
-function renderGallery(mediaList) {
-    const container = document.getElementById('mediaGallery');
-    if (!mediaList || mediaList.length === 0) {
-        container.innerHTML = '<p class="col-span-3 text-center text-sm text-gray-400">Nenhuma mídia adicionada</p>';
-        return;
-    }
-
-    container.innerHTML = mediaList.map(item => `
-        <a href="${item.url}" target="_blank" class="block aspect-square rounded-lg overflow-hidden border border-gray-200 relative group">
-            <img src="${item.url}" class="w-full h-full object-cover">
-            <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all"></div>
-        </a>
-    `).join('');
-}
-
-// Adicionar Histórico Rápido
-document.getElementById('btnAddUpdate').addEventListener('click', () => {
-    const input = document.getElementById('quickUpdateInput');
-    const text = input.value.trim();
-    if (text) {
-        addHistoryEntry("Atualização Manual", text);
-        input.value = '';
-    }
-});
-
-async function addHistoryEntry(action, note) {
-    if (!currentEditingOsId) return;
-    
-    const snapshot = await db.ref(`work_orders/${currentEditingOsId}/history`).once('value');
-    const currentHistory = snapshot.val() || [];
-    
-    const newEntry = {
-        date: new Date().toISOString(),
-        user: currentUser.name,
-        action: action,
-        note: note
-    };
-    
-    currentHistory.unshift(newEntry); // Adiciona no começo
-    
-    await db.ref(`work_orders/${currentEditingOsId}`).update({ history: currentHistory });
-    renderHistory(currentHistory);
-}
-
-function renderHistory(historyList) {
-    const container = document.getElementById('historyFeed');
-    if (!historyList || historyList.length === 0) {
-        container.innerHTML = '<p class="text-center text-sm text-gray-400">Sem histórico.</p>';
-        return;
-    }
-
-    container.innerHTML = historyList.map(item => `
-        <div class="flex gap-3">
-            <div class="flex-shrink-0 mt-1">
-                <div class="w-2 h-2 rounded-full bg-blue-400 ring-4 ring-white"></div>
-            </div>
-            <div class="bg-gray-50 rounded-lg p-3 w-full">
-                <div class="flex justify-between items-baseline mb-1">
-                    <span class="font-bold text-sm text-gray-800">${item.user}</span>
-                    <span class="text-xs text-gray-500">${new Date(item.date).toLocaleString()}</span>
-                </div>
-                <p class="text-xs font-semibold text-blue-600 mb-0.5">${item.action}</p>
-                <p class="text-sm text-gray-600">${item.note}</p>
-            </div>
-        </div>
-    `).join('');
-}
-
-/* --- 8. PAINEL ADMINISTRATIVO (Gestão de Usuários e Config) --- */
-
-document.getElementById('btnAdminPanel').addEventListener('click', () => {
-    document.getElementById('modalAdmin').classList.remove('hidden');
-    loadAdminUsersList();
-    loadAdminConfig();
-});
-
-// Abas do Admin
-document.querySelectorAll('.admin-tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        // Remove active class from all
-        document.querySelectorAll('.admin-tab-btn').forEach(b => {
-            b.classList.remove('active', 'border-blue-600', 'text-blue-600', 'font-bold');
-            b.classList.add('border-transparent', 'text-gray-500');
-        });
-        // Add active to clicked
-        btn.classList.add('active', 'border-blue-600', 'text-blue-600', 'font-bold');
-        btn.classList.remove('border-transparent', 'text-gray-500');
-        
-        // Show Content
-        document.querySelectorAll('.admin-tab-content').forEach(c => c.classList.add('hidden'));
-        document.getElementById(`tab-${btn.dataset.tab}`).classList.remove('hidden');
-    });
-});
-
-function loadAdminUsersList() {
-    const list = document.getElementById('adminUserList');
-    list.innerHTML = '';
-    
-    Object.entries(allUsers).forEach(([key, user]) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                <p class="text-gray-900 whitespace-no-wrap font-bold">${user.name}</p>
-            </td>
-            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                <span class="relative inline-block px-3 py-1 font-semibold leading-tight text-green-900">
-                    <span aria-hidden class="absolute inset-0 bg-green-200 opacity-50 rounded-full"></span>
-                    <span class="relative">${ROLES[user.role]?.label || user.role}</span>
-                </span>
-            </td>
-            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                ${user.role !== 'admin' ? `
-                <button class="text-red-600 hover:text-red-900" onclick="deleteUser('${key}')">Excluir</button>
-                ` : '<span class="text-gray-400 italic">Super Admin</span>'}
-            </td>
-        `;
-        list.appendChild(tr);
-    });
-}
-
-document.getElementById('btnNewUser').addEventListener('click', () => {
-    document.getElementById('formNewUserContainer').classList.remove('hidden');
-});
-
-document.getElementById('btnSaveNewUser').addEventListener('click', async () => {
-    const name = document.getElementById('newUserName').value;
-    const role = document.getElementById('newUserRole').value;
-    
-    if(!name) return alert("Nome é obrigatório");
-    
-    await db.ref('users').push({
-        name: name,
-        role: role,
-        createdAt: firebase.database.ServerValue.TIMESTAMP
-    });
-    
-    document.getElementById('newUserName').value = '';
-    document.getElementById('formNewUserContainer').classList.add('hidden');
-    alert("Usuário criado!");
-    // Listener do loadUsers atualizará a lista automaticamente
-});
-
-window.deleteUser = async (key) => {
-    if(confirm("Tem certeza que deseja remover este usuário?")) {
-        await db.ref(`users/${key}`).remove();
-    }
+    const data = await response.json();
+    return { url: data.secure_url, configKey: activeCloudinaryConfig.key };
+  } catch (error) {
+    console.error("Erro Cloudinary:", error);
+    throw error;
+  }
 };
 
-// Configurações do Sistema
-function loadAdminConfig() {
-    if(systemConfig) {
-        document.getElementById('configShopName').value = systemConfig.shopName || '';
-        document.getElementById('configCloudName').value = systemConfig.apiKeys?.cloudinary_cloud_name || '';
-        document.getElementById('configUploadPreset').value = systemConfig.apiKeys?.cloudinary_upload_preset || '';
-        document.getElementById('configGeminiKey').value = systemConfig.apiKeys?.gemini_api_key || '';
-    }
-}
+document.addEventListener('DOMContentLoaded', () => {
+  try {
+      if (firebaseConfig.apiKey === "COLE_SUA_API_KEY_AQUI") {
+          console.error("⚠️ ATENÇÃO: Você precisa colar as chaves do Firebase no início do arquivo app.js");
+          alert("Configuração Pendente: Edite o arquivo app.js e adicione as chaves do Firebase do novo cliente.");
+          return;
+      }
+      firebase.initializeApp(firebaseConfig);
+  } catch (e) {
+      console.error("Erro ao iniciar Firebase:", e);
+  }
 
-document.getElementById('btnSaveSystemConfig').addEventListener('click', async () => {
-    const newConfig = {
-        shopName: document.getElementById('configShopName').value,
-        apiKeys: {
-            cloudinary_cloud_name: document.getElementById('configCloudName').value.trim(),
-            cloudinary_upload_preset: document.getElementById('configUploadPreset').value.trim(),
-            gemini_api_key: document.getElementById('configGeminiKey').value.trim()
-        }
-    };
+  // ATENÇÃO: Usamos apenas database(), sem storage().
+  const db = firebase.database();
+  
+  let currentUser = null;
+  let allServiceOrders = {};
+  let lightboxMedia = [];
+  let currentLightboxIndex = 0;
+  let filesToUpload = [];
+  let appStartTime = Date.now();
+
+  const STATUS_LIST = [ 'Aguardando-Mecanico', 'Em-Analise', 'Orcamento-Enviado', 'Aguardando-Aprovacao', 'Servico-Autorizado', 'Em-Execucao', 'Finalizado-Aguardando-Retirada', 'Entregue' ];
+  const ATTENTION_STATUSES = { 
+      'Aguardando-Mecanico': { label: 'AGUARDANDO MECÂNICO', color: 'yellow', blinkClass: 'blinking-aguardando' }, 
+      'Servico-Autorizado': { label: 'SERVIÇO AUTORIZADO', color: 'green', blinkClass: 'blinking-autorizado' } 
+  };
+  const LED_TRIGGER_STATUSES = ['Aguardando-Mecanico', 'Servico-Autorizado'];
+
+  // Seletores
+  const userScreen = document.getElementById('userScreen');
+  const app = document.getElementById('app');
+  const loginForm = document.getElementById('loginForm');
+  const userSelect = document.getElementById('userSelect');
+  const passwordInput = document.getElementById('passwordInput');
+  const loginError = document.getElementById('loginError');
+  const kanbanBoard = document.getElementById('kanbanBoard');
+  const addOSBtn = document.getElementById('addOSBtn');
+  const logoutButton = document.getElementById('logoutButton');
+  const osModal = document.getElementById('osModal');
+  const osForm = document.getElementById('osForm');
+  const detailsModal = document.getElementById('detailsModal');
+  const logForm = document.getElementById('logForm');
+  const kmUpdateForm = document.getElementById('kmUpdateForm');
+  const attentionPanel = document.getElementById('attention-panel');
+  const attentionPanelContainer = document.getElementById('attention-panel-container');
+  const togglePanelBtn = document.getElementById('toggle-panel-btn');
+  const lightbox = document.getElementById('lightbox');
+  const mediaInput = document.getElementById('media-input');
+  const openCameraBtn = document.getElementById('openCameraBtn');
+  const openGalleryBtn = document.getElementById('openGalleryBtn');
+  const alertLed = document.getElementById('alert-led');
+  const postLogActions = document.getElementById('post-log-actions');
+  const deleteOsBtn = document.getElementById('deleteOsBtn');
+  const confirmDeleteModal = document.getElementById('confirmDeleteModal');
+  const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+  const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+  const adminBtn = document.getElementById('adminBtn');
+  const adminModal = document.getElementById('adminModal');
+  const cloudinaryForm = document.getElementById('cloudinaryForm');
+  const reportsBtn = document.getElementById('reportsBtn');
+  const reportsModal = document.getElementById('reportsModal');
+  const reportsForm = document.getElementById('reportsForm');
+  const reportsResultContainer = document.getElementById('reportsResultContainer');
+  const exportReportBtn = document.getElementById('exportReportBtn');
+  const globalSearchInput = document.getElementById('globalSearchInput');
+  const globalSearchResults = document.getElementById('globalSearchResults');
+
+  const formatStatus = (status) => status.replace(/-/g, ' ');
+
+  // --- AUTENTICAÇÃO ---
+  const logoutUser = () => {
+    localStorage.removeItem('centerCarSession');
+    location.reload();
+  };
+
+  const scheduleDailyLogout = () => {
+    const now = new Date();
+    const logoutTime = new Date();
+    logoutTime.setHours(19, 0, 0, 0);
+    if (now > logoutTime) logoutTime.setDate(logoutTime.getDate() + 1);
     
-    await db.ref('system_config').update(newConfig);
-    alert("Configurações salvas! A página será recarregada.");
-    window.location.reload();
-});
+    setTimeout(() => {
+      if (localStorage.getItem('centerCarSession')) {
+        showNotification('Sessão encerrada por horário.', 'success');
+        setTimeout(logoutUser, 2000);
+      }
+    }, logoutTime.getTime() - now.getTime());
+  };
 
-/* --- 9. BUSCA GLOBAL --- */
-const searchInputs = [document.getElementById('globalSearch'), document.getElementById('globalSearchMobile')];
+  const loginUser = (user) => {
+    const sessionData = { user: user, loginTime: new Date().toISOString() };
+    localStorage.setItem('centerCarSession', JSON.stringify(sessionData));
+    currentUser = user;
+    
+    document.getElementById('currentUserName').textContent = user.name;
+    userScreen.classList.add('hidden');
+    app.classList.remove('hidden');
+    
+    initializeKanban();
+    listenToServiceOrders();
+    listenToNotifications(); // Notificações internas
+    listenToCloudinaryConfigs();
+    scheduleDailyLogout();
 
-searchInputs.forEach(input => {
-    if(!input) return;
-    input.addEventListener('input', (e) => {
-        const term = e.target.value.toLowerCase();
-        const cards = document.querySelectorAll('.kanban-column > div'); // Seleciona os cards
-        
-        cards.forEach(card => {
-            const text = card.textContent.toLowerCase();
-            if(text.includes(term)) {
-                card.style.display = 'block';
-            } else {
-                card.style.display = 'none';
-            }
-        });
+    if (user.role === 'Gestor') {
+      adminBtn.classList.remove('hidden');
+      reportsBtn.classList.remove('hidden');
+    }
+  };
+
+  const initializeLoginScreen = () => {
+    userSelect.innerHTML = '<option value="">Selecione...</option>';
+    USERS.forEach(user => {
+        const opt = document.createElement('option');
+        opt.value = user.name;
+        opt.textContent = `${user.name} (${user.role})`;
+        userSelect.appendChild(opt);
     });
+
+    const storedSession = localStorage.getItem('centerCarSession');
+    if (storedSession) {
+        const sessionData = JSON.parse(storedSession);
+        const loginTime = new Date(sessionData.loginTime);
+        const cutoff = new Date();
+        cutoff.setHours(19, 0, 0, 0);
+        if (new Date() < cutoff) cutoff.setDate(cutoff.getDate() - 1);
+        
+        if (loginTime < cutoff) {
+            logoutUser();
+        } else {
+            loginUser(sessionData.user);
+        }
+    } else {
+        userScreen.classList.remove('hidden');
+    }
+  };
+
+  // --- KANBAN ---
+  const initializeKanban = () => {
+    const collapsedState = JSON.parse(localStorage.getItem('collapsedColumnsMenechelli')) || {};
+    kanbanBoard.innerHTML = STATUS_LIST.map(status => {
+      const isCollapsed = collapsedState[status];
+      const searchInputHTML = status === 'Entregue' 
+        ? `<div class="my-2"><input type="search" data-status="${status}" placeholder="Filtrar..." class="w-full p-2 text-xs border rounded search-input-entregue"></div>` 
+        : '';
+      const ledHTML = isCollapsed ? '<div class="column-led"></div>' : '';
+      
+      return `
+        <div class="status-column">
+            <div class="p-3 flex justify-between items-center cursor-pointer toggle-column-btn bg-gray-200 rounded-t-lg" data-status="${status}">
+                <div class="flex items-center gap-2">
+                    <h3 class="font-bold text-gray-700 text-sm uppercase">${formatStatus(status)}</h3>
+                    ${ledHTML}
+                </div>
+                <i class='bx bxs-chevron-down transition-transform ${isCollapsed ? 'rotate-180' : ''}'></i>
+            </div>
+            ${searchInputHTML}
+            <div class="vehicle-list space-y-2 ${isCollapsed ? 'collapsed' : ''}" data-status="${status}"></div>
+        </div>`;
+    }).join('');
+    updateAttentionPanel();
+  };
+
+  const createCardHTML = (os) => {
+    const idx = STATUS_LIST.indexOf(os.status);
+    const prev = idx > 0 ? STATUS_LIST[idx - 1] : null;
+    const next = idx < STATUS_LIST.length - 1 ? STATUS_LIST[idx + 1] : null;
+    
+    const prevBtn = prev ? `<button data-os-id="${os.id}" data-new-status="${prev}" class="btn-move p-1 hover:bg-gray-100 rounded-full"><i class='bx bx-chevron-left text-xl'></i></button>` : `<div class="w-7"></div>`;
+    const nextBtn = next ? `<button data-os-id="${os.id}" data-new-status="${next}" class="btn-move p-1 hover:bg-gray-100 rounded-full"><i class='bx bx-chevron-right text-xl'></i></button>` : `<div class="w-7"></div>`;
+    
+    const priorityHtml = os.priority ? `<div class="priority-indicator priority-${os.priority}"></div>` : '';
+    
+    return `
+    <div id="${os.id}" class="vehicle-card status-${os.status}" data-os-id="${os.id}">
+        ${priorityHtml}
+        <div class="flex justify-between items-start">
+            <div class="card-clickable flex-grow pr-4">
+                <p class="font-black text-lg text-gray-800">${os.placa}</p>
+                <p class="text-xs font-semibold text-blue-700 uppercase">${os.modelo}</p>
+                <p class="text-xs text-gray-500 mt-1 truncate">${os.cliente}</p>
+            </div>
+            <div class="flex flex-col gap-1 items-end">
+                ${nextBtn}
+                ${prevBtn}
+            </div>
+        </div>
+        ${os.km ? `<div class="mt-2 text-xs bg-gray-100 px-2 py-1 rounded inline-block text-gray-600">KM: ${os.km}</div>` : ''}
+    </div>`;
+  };
+
+  // --- LISTENERS FIREBASE ---
+  const listenToServiceOrders = () => {
+    const osRef = db.ref('serviceOrders');
+    
+    const handleUpdate = (snapshot) => {
+        const os = { ...snapshot.val(), id: snapshot.key };
+        allServiceOrders[os.id] = os;
+        
+        const oldCard = document.getElementById(os.id);
+        if (oldCard) oldCard.remove();
+
+        const list = kanbanBoard.querySelector(`.vehicle-list[data-status="${os.status}"]`);
+        if (list) {
+            list.insertAdjacentHTML('afterbegin', createCardHTML(os));
+        }
+        
+        if (!detailsModal.classList.contains('hidden') && document.getElementById('logOsId').value === os.id) {
+            renderTimeline(os);
+            renderMediaGallery(os);
+        }
+        updateAttentionPanel();
+    };
+
+    osRef.on('child_added', handleUpdate);
+    osRef.on('child_changed', handleUpdate);
+    osRef.on('child_removed', snapshot => {
+        const id = snapshot.key;
+        delete allServiceOrders[id];
+        const card = document.getElementById(id);
+        if(card) card.remove();
+        updateAttentionPanel();
+    });
+  };
+
+  const updateAttentionPanel = () => {
+      let triggering = false;
+      attentionPanel.innerHTML = Object.entries(ATTENTION_STATUSES).map(([status, config]) => {
+          const vehicles = Object.values(allServiceOrders).filter(os => os.status === status);
+          if (vehicles.length > 0) triggering = true;
+          
+          const listHtml = vehicles.length > 0 
+            ? vehicles.map(os => `<p class="cursor-pointer hover:underline" onclick="openDetails('${os.id}')">${os.placa} - ${os.modelo}</p>`).join('')
+            : '<span class="text-gray-500 italic">Vazio</span>';
+            
+          return `
+          <div class="attention-box bg-gray-800 rounded p-2 border border-gray-600 ${vehicles.length > 0 ? config.blinkClass : ''}">
+             <h4 class="text-${config.color}-400 font-bold text-xs text-center mb-1">${config.label}</h4>
+             <div class="text-white text-xs text-center max-h-20 overflow-y-auto">${listHtml}</div>
+          </div>`;
+      }).join('');
+      
+      alertLed.style.display = triggering ? 'block' : 'none';
+  };
+
+  // --- NOTIFICAÇÕES EM TEMPO REAL (NOVO) ---
+  function sendTeamNotification(message) {
+      if (!currentUser) return;
+      db.ref('notifications').push({
+          message: message,
+          user: currentUser.name,
+          timestamp: firebase.database.ServerValue.TIMESTAMP
+      });
+  }
+
+  function listenToNotifications() {
+      // Ouve apenas notificações novas (após o início da sessão)
+      db.ref('notifications').orderByChild('timestamp').startAt(appStartTime).on('child_added', snapshot => {
+          const n = snapshot.val();
+          if (n && n.user !== currentUser.name) {
+              showNotification(`${n.message}`, 'success');
+          }
+      });
+  }
+
+  window.openDetails = (osId) => {
+      const os = allServiceOrders[osId];
+      if (!os) return;
+      
+      document.getElementById('logOsId').value = osId;
+      document.getElementById('detailsHeader').innerHTML = `
+        <div>
+            <h1 class="text-3xl font-black text-gray-800">${os.placa}</h1>
+            <p class="text-lg text-blue-700 font-bold">${os.modelo}</p>
+            <p class="text-gray-500">${os.cliente} | Tel: ${os.telefone || '--'}</p>
+        </div>
+        <div class="text-right">
+            <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-bold">${formatStatus(os.status)}</span>
+            <p class="text-2xl font-bold text-gray-700 mt-2">${os.km ? os.km + ' KM' : ''}</p>
+        </div>
+      `;
+      
+      const obsDiv = document.getElementById('detailsObservacoes');
+      if (os.observacoes) {
+          obsDiv.innerHTML = `<p class="text-red-600 font-semibold text-sm">RECLAMAÇÃO:</p><p class="text-gray-700">${os.observacoes}</p>`;
+          obsDiv.classList.remove('hidden');
+      } else {
+          obsDiv.classList.add('hidden');
+      }
+      
+      if (currentUser.role === 'Gestor' || currentUser.role === 'Atendente') {
+          deleteOsBtn.classList.remove('hidden');
+      } else {
+          deleteOsBtn.classList.add('hidden');
+      }
+
+      renderTimeline(os);
+      renderMediaGallery(os);
+      detailsModal.classList.remove('hidden');
+      detailsModal.classList.add('flex');
+  };
+
+  const renderTimeline = (os) => {
+      const container = document.getElementById('timelineContainer');
+      const logs = os.logs ? Object.values(os.logs).sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)) : [];
+      
+      if (logs.length === 0) {
+          container.innerHTML = '<p class="text-gray-400 text-center italic text-sm">Nenhum registro.</p>';
+          return;
+      }
+      
+      container.innerHTML = logs.map(log => {
+          const date = new Date(log.timestamp).toLocaleString('pt-BR');
+          let typeClass = log.type === 'status' ? 'border-l-4 border-yellow-400 pl-2' : '';
+          
+          return `
+          <div class="relative pb-4 border-b border-gray-100 last:border-0 ${typeClass}">
+              <div class="flex justify-between items-start">
+                  <span class="font-bold text-xs text-blue-900">${log.user}</span>
+                  <span class="text-[10px] text-gray-400">${date}</span>
+              </div>
+              <p class="text-sm text-gray-700 mt-1">${log.description}</p>
+              ${log.parts ? `<p class="text-xs text-gray-500 mt-1">🔧 Peças: ${log.parts}</p>` : ''}
+              ${log.value ? `<p class="text-xs text-green-600 font-bold">R$ ${log.value}</p>` : ''}
+          </div>`;
+      }).join('');
+  };
+
+  const renderMediaGallery = (os) => {
+      const grid = document.getElementById('thumbnail-grid');
+      const media = os.media ? Object.values(os.media) : [];
+      
+      if (media.length === 0) {
+          grid.innerHTML = '<p class="col-span-4 text-center text-xs text-gray-400 py-2">Sem fotos</p>';
+          return;
+      }
+      
+      lightboxMedia = media;
+      
+      grid.innerHTML = media.map((item, idx) => {
+          let content = '';
+          if (item.type && item.type.startsWith('video')) {
+              content = '<div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20"><i class="bx bx-play-circle text-white text-2xl"></i></div>';
+          }
+          const src = item.type && item.type.startsWith('image') ? item.url : 'images/file-placeholder.png';
+          
+          const delBtn = (USERS_CAN_DELETE_MEDIA.includes(currentUser.name)) 
+            ? `<button onclick="deleteMedia('${os.id}', '${Object.keys(os.media)[idx]}')" class="absolute top-0 right-0 bg-red-600 text-white w-5 h-5 flex items-center justify-center rounded-bl text-xs">&times;</button>`
+            : '';
+
+          return `
+          <div class="relative aspect-square bg-gray-200 rounded overflow-hidden cursor-pointer group" onclick="openLightbox(${idx})">
+              <img src="${src}" class="w-full h-full object-cover">
+              ${content}
+              ${delBtn}
+          </div>`;
+      }).join('');
+  };
+
+  // --- AÇÕES DO SISTEMA ---
+  
+  loginForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = userSelect.value;
+      const pass = passwordInput.value;
+      const user = USERS.find(u => u.name === name);
+      
+      if (user && user.password === pass) {
+          loginUser(user);
+      } else {
+          loginError.textContent = "Senha incorreta.";
+      }
+  });
+  
+  logoutButton.addEventListener('click', logoutUser);
+
+  addOSBtn.addEventListener('click', () => {
+      osForm.reset();
+      document.getElementById('osId').value = '';
+      const respSelect = document.getElementById('osResponsavel');
+      respSelect.innerHTML = '<option value="">Selecione...</option>' + USERS.map(u => `<option value="${u.name}">${u.name}</option>`).join('');
+      osModal.classList.remove('hidden');
+      osModal.classList.add('flex');
+  });
+
+  osForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const priority = document.querySelector('input[name="osPrioridade"]:checked').value;
+      const data = {
+          placa: document.getElementById('osPlaca').value.toUpperCase(),
+          modelo: document.getElementById('osModelo').value,
+          cliente: document.getElementById('osCliente').value,
+          telefone: document.getElementById('osTelefone').value,
+          km: document.getElementById('osKm').value,
+          responsible: document.getElementById('osResponsavel').value,
+          observacoes: document.getElementById('osObservacoes').value,
+          priority: priority,
+          status: 'Aguardando-Mecanico',
+          createdAt: new Date().toISOString(),
+          lastUpdate: new Date().toISOString()
+      };
+      
+      const newRef = db.ref('serviceOrders').push(data);
+      // Log de criação
+      db.ref(`serviceOrders/${newRef.key}/logs`).push({
+          timestamp: new Date().toISOString(),
+          user: currentUser.name,
+          description: "O.S. Criada",
+          type: 'status'
+      });
+      sendTeamNotification(`Nova O.S. ${data.placa} criada por ${currentUser.name}`);
+      
+      osModal.classList.add('hidden');
+      osModal.classList.remove('flex');
+      showNotification('Nova O.S. criada!', 'success');
+  });
+
+  logForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = logForm.querySelector('button[type="submit"]');
+      btn.disabled = true;
+      btn.innerHTML = 'Salvando...';
+      
+      const osId = document.getElementById('logOsId').value;
+      const desc = document.getElementById('logDescricao').value;
+      
+      let mediaItems = [];
+      if (filesToUpload.length > 0) {
+          try {
+              const uploads = filesToUpload.map(f => uploadFileToCloudinary(f));
+              const results = await Promise.all(uploads);
+              mediaItems = results.map((res, i) => ({
+                  url: res.url,
+                  type: filesToUpload[i].type,
+                  uploadedBy: currentUser.name,
+                  timestamp: new Date().toISOString()
+              }));
+          } catch(err) {
+              alert("Erro no upload: " + err.message);
+              btn.disabled = false; return;
+          }
+      }
+
+      const logEntry = {
+          timestamp: new Date().toISOString(),
+          user: currentUser.name,
+          description: desc,
+          type: 'log',
+          parts: document.getElementById('logPecas').value,
+          value: document.getElementById('logValor').value
+      };
+      
+      await db.ref(`serviceOrders/${osId}/logs`).push(logEntry);
+      
+      if (mediaItems.length > 0) {
+          mediaItems.forEach(async (m) => {
+              await db.ref(`serviceOrders/${osId}/media`).push(m);
+          });
+      }
+      
+      sendTeamNotification(`Atualização em ${allServiceOrders[osId].placa}`);
+      
+      logForm.reset();
+      filesToUpload = [];
+      document.getElementById('fileName').textContent = '';
+      btn.disabled = false;
+      btn.innerHTML = `<i class='bx bx-send'></i> Registrar`;
+      
+      document.getElementById('post-log-actions').classList.remove('hidden');
+  });
+  
+  mediaInput.addEventListener('change', (e) => {
+      if(e.target.files.length > 0) filesToUpload = Array.from(e.target.files);
+      document.getElementById('fileName').textContent = filesToUpload.length > 0 ? `${filesToUpload.length} arquivo(s)` : '';
+  });
+  
+  document.getElementById('openCameraBtn').onclick = () => {
+      mediaInput.setAttribute('capture', 'environment');
+      mediaInput.click();
+  };
+  document.getElementById('openGalleryBtn').onclick = () => {
+      mediaInput.removeAttribute('capture');
+      mediaInput.click();
+  };
+  
+  const moveStatus = async (direction) => {
+      const osId = document.getElementById('logOsId').value;
+      const os = allServiceOrders[osId];
+      const idx = STATUS_LIST.indexOf(os.status);
+      let newStatus = null;
+      
+      if (direction === 'next' && idx < STATUS_LIST.length - 1) newStatus = STATUS_LIST[idx + 1];
+      if (direction === 'prev' && idx > 0) newStatus = STATUS_LIST[idx - 1];
+      
+      if (newStatus) {
+          await db.ref(`serviceOrders/${osId}`).update({ status: newStatus, lastUpdate: new Date().toISOString() });
+          
+          await db.ref(`serviceOrders/${osId}/logs`).push({
+              timestamp: new Date().toISOString(),
+              user: currentUser.name,
+              description: `Status alterado para: ${formatStatus(newStatus)}`,
+              type: 'status'
+          });
+          detailsModal.classList.add('hidden');
+          detailsModal.classList.remove('flex');
+          showNotification('Status atualizado!');
+      }
+      document.getElementById('post-log-actions').classList.add('hidden');
+  };
+  
+  document.getElementById('btn-move-next').onclick = () => moveStatus('next');
+  document.getElementById('btn-move-prev').onclick = () => moveStatus('prev');
+  document.getElementById('btn-stay').onclick = () => document.getElementById('post-log-actions').classList.add('hidden');
+
+  kanbanBoard.addEventListener('click', (e) => {
+      const card = e.target.closest('.vehicle-card');
+      const btnMove = e.target.closest('.btn-move');
+      const toggleBtn = e.target.closest('.toggle-column-btn');
+      
+      if (btnMove) {
+          e.stopPropagation();
+          const { osId, newStatus } = btnMove.dataset;
+          db.ref(`serviceOrders/${osId}`).update({ status: newStatus });
+      } else if (card) {
+          openDetails(card.dataset.osId);
+      } else if (toggleBtn) {
+          const status = toggleBtn.dataset.status;
+          const list = kanbanBoard.querySelector(`.vehicle-list[data-status="${status}"]`);
+          list.classList.toggle('collapsed');
+          toggleBtn.querySelector('i').classList.toggle('rotate-180');
+          
+          const state = JSON.parse(localStorage.getItem('collapsedColumnsMenechelli')) || {};
+          state[status] = list.classList.contains('collapsed');
+          localStorage.setItem('collapsedColumnsMenechelli', JSON.stringify(state));
+          initializeKanban();
+      }
+  });
+
+  const listenToCloudinaryConfigs = () => {
+    db.ref('cloudinaryConfigs').limitToLast(1).on('value', snapshot => {
+      const val = snapshot.val();
+      if (val) {
+        const key = Object.keys(val)[0];
+        activeCloudinaryConfig = { ...val[key], key };
+      }
+    });
+  };
+  
+  adminBtn.onclick = () => {
+      adminModal.classList.remove('hidden');
+      adminModal.classList.add('flex');
+  };
+  
+  cloudinaryForm.onsubmit = (e) => {
+      e.preventDefault();
+      const data = {
+          cloudName: document.getElementById('cloudNameInput').value,
+          uploadPreset: document.getElementById('uploadPresetInput').value,
+          updatedBy: currentUser.name,
+          timestamp: firebase.database.ServerValue.TIMESTAMP
+      };
+      db.ref('cloudinaryConfigs').push(data);
+      adminModal.classList.add('hidden');
+      adminModal.classList.remove('flex');
+      showNotification('Configuração de Mídia Salva!');
+  };
+
+  initializeLoginScreen();
+
+  document.querySelectorAll('.btn-close-modal').forEach(btn => {
+      btn.onclick = (e) => {
+          e.target.closest('.modal').classList.add('hidden');
+          e.target.closest('.modal').classList.remove('flex');
+      };
+  });
 });
