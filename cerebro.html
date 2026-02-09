@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CÉREBRO - IMPORTAÇÃO DE DADOS TÉCNICOS</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #fff; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .container { background: #1e293b; padding: 40px; border-radius: 12px; width: 400px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid #334155; }
+        h1 { color: #facc15; margin-bottom: 10px; font-size: 24px; }
+        p { color: #94a3b8; font-size: 14px; margin-bottom: 20px; }
+        .file-upload { position: relative; display: inline-block; width: 100%; margin-bottom: 20px; }
+        .file-upload input { position: absolute; left: 0; top: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+        .file-upload label { display: block; padding: 15px; background: #334155; border: 2px dashed #475569; border-radius: 8px; color: #cbd5e1; transition: 0.3s; }
+        .file-upload:hover label { border-color: #facc15; color: #fff; }
+        button { background: #facc15; color: #000; border: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; transition: 0.3s; font-size: 16px; }
+        button:hover { background: #eab308; transform: translateY(-2px); }
+        button:disabled { background: #475569; cursor: not-allowed; transform: none; color: #94a3b8; }
+        #status { margin-top: 15px; font-size: 13px; min-height: 20px; }
+        .success { color: #4ade80; }
+        .error { color: #f87171; }
+        .back-link { display: block; margin-top: 20px; color: #64748b; text-decoration: none; font-size: 12px; }
+        .back-link:hover { color: #fff; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <i class='bx bxs-brain' style="font-size: 50px; color: #facc15; margin-bottom: 10px;"></i>
+        <h1>Injetor de Conhecimento</h1>
+        <p>Carregue o arquivo JSON com o catálogo de peças e manuais técnicos para alimentar a IA.</p>
+        
+        <div class="file-upload">
+            <input type="file" id="jsonFile" accept=".json">
+            <label for="jsonFile" id="fileLabel">
+                <i class='bx bx-upload'></i> Escolher Arquivo JSON
+            </label>
+        </div>
+
+        <button id="btnInject" onclick="injetar()" disabled>INJETAR DADOS</button>
+        <div id="status"></div>
+        
+        <a href="index.html" class="back-link">Voltar para o Dashboard</a>
+    </div>
+
+    <script>
+        // Configuração Firebase (Mantida para consistência)
+        const firebaseConfig = {
+            apiKey: "AIzaSyB5JpYm8l0AlF5ZG3HtkyFZgmrpsUrDhv0",
+            authDomain: "dashboard-oficina-pro.firebaseapp.com",
+            databaseURL: "https://dashboard-oficina-pro-default-rtdb.firebaseio.com",
+            projectId: "dashboard-oficina-pro",
+            storageBucket: "dashboard-oficina-pro.appspot.com",
+            messagingSenderId: "736157192887",
+            appId: "1:736157192887:web:c23d3daade848a33d67332"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let jsonData = null;
+
+        document.getElementById('jsonFile').addEventListener('change', handleFileSelect);
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                document.getElementById('fileLabel').innerText = file.name;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        jsonData = JSON.parse(e.target.result);
+                        document.getElementById('status').innerHTML = '<span style="color: #94a3b8">Arquivo validado. Pronto para injeção.</span>';
+                        document.getElementById('btnInject').disabled = false;
+                    } catch (err) {
+                        document.getElementById('status').innerHTML = `<span class="error">Erro no JSON: ${err.message}</span>`;
+                    }
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        function injetar() {
+            if (!jsonData) return;
+            const btn = document.getElementById('btnInject');
+            btn.disabled = true;
+            btn.innerText = "PROCESSANDO...";
+            
+            // Grava na pasta 'catalogs' do Firebase
+            db.ref('catalogs').set(jsonData)
+                .then(() => {
+                    document.getElementById('status').innerHTML = `<span class="success">SUCESSO! ${jsonData.length || 'Dados'} registros injetados no Cérebro.</span>`;
+                    btn.innerText = "CONCLUÍDO";
+                    alert("Base de conhecimento atualizada com sucesso!");
+                })
+                .catch((error) => {
+                    document.getElementById('status').innerHTML = `<span class="error">Falha: ${error.message}</span>`;
+                    btn.innerText = "TENTAR NOVAMENTE";
+                    btn.disabled = false;
+                });
+        }
+    </script>
+</body>
+</html>
