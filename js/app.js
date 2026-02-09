@@ -349,7 +349,7 @@ document.addEventListener('DOMContentLoaded', () => {
           obsDiv.classList.add('hidden');
       }
       
-      // Controle do Botão Excluir (Só Gestor/Desenvolvedor/Thiago)
+      // Controle do Botão Excluir (Só Gestor/Desenvolvedor)
       const delBtn = document.getElementById('deleteOsBtn');
       if (currentUser.role === 'Gestor' || currentUser.name === 'Thiago Ventura Valencio') {
           delBtn.classList.remove('hidden');
