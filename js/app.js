@@ -1,10 +1,9 @@
- /* ==================================================================
+/* ==================================================================
    DASHBOARD CENTER CAR MENECHELLI - SISTEMA DE GESTÃO V2.1
    Desenvolvido por: thIAguinho Soluções
    ================================================================== */
 
-// CONFIGURAÇÃO FIREBASE (Center-Car-Menechelli)
-// COLE AQUI AS CHAVES DO SEU NOVO PROJETO SE AINDA NÃO TIVER FEITO
+// CONFIGURAÇÃO FIREBASE (Center Car Menechelli - CHAVES REAIS EXTRAÍDAS DO ZIP)
 const firebaseConfig = {
   apiKey: "AIzaSyDFbvRiLpUcXFJgVSwNobXi0fX_IceBK5k",
   authDomain: "centercarmenechelli-47e05.firebaseapp.com",
@@ -19,7 +18,7 @@ const firebaseConfig = {
 let activeCloudinaryConfig = null;
 let currentUser = null;
 let allServiceOrders = {};
-let allUsers = []; // Lista dinâmica de usuários
+let allUsers = []; 
 let lightboxMedia = [];
 let currentLightboxIndex = 0;
 let filesToUpload = [];
@@ -75,15 +74,9 @@ const uploadFileToCloudinary = async (file) => {
 
 // --- INICIALIZAÇÃO DO APP ---
 document.addEventListener('DOMContentLoaded', () => {
-  try {
-      if (firebaseConfig.apiKey.includes("COLE_SUA_API_KEY")) {
-          alert("ERRO DE CONFIGURAÇÃO: Edite o arquivo app.js e coloque as chaves do Firebase.");
-          return;
-      }
-      firebase.initializeApp(firebaseConfig);
-  } catch (e) { console.error("Erro Firebase:", e); }
-
+  firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
+
   const STATUS_LIST = [ 'Aguardando-Mecanico', 'Em-Analise', 'Orcamento-Enviado', 'Aguardando-Aprovacao', 'Servico-Autorizado', 'Em-Execucao', 'Finalizado-Aguardando-Retirada', 'Entregue' ];
   const ATTENTION_STATUSES = { 
       'Aguardando-Mecanico': { label: 'AGUARDANDO MECÂNICO', colorClass: 'text-yellow-400', borderClass: 'border-yellow-500', blink: true }, 
@@ -91,7 +84,6 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   // --- GERENCIAMENTO DE USUÁRIOS (FIREBASE) ---
-  // Carrega usuários do banco. Se estiver vazio, cria o Admin padrão (Thiago).
   const usersRef = db.ref('users');
   usersRef.on('value', snapshot => {
       const data = snapshot.val();
@@ -100,22 +92,21 @@ document.addEventListener('DOMContentLoaded', () => {
       allUsers = [];
 
       if (!data) {
-          // Cria usuário padrão se não existir nenhum
-          const defaultAdmin = { name: 'Thiago Ventura Valencio', role: 'Gestor', password: '1940' };
+          // Cria usuário padrão Mestre se não existir nenhum
+          const defaultAdmin = { name: 'Thiago Ventura Valencio', role: 'Gestor', password: '1940' }; // Senha original do ZIP
           usersRef.push(defaultAdmin);
           return;
       }
 
       Object.entries(data).forEach(([key, user]) => {
-          user.id = key; // Salva o ID do firebase
+          user.id = key; 
           allUsers.push(user);
           const opt = document.createElement('option');
-          opt.value = user.id; // Usamos o ID agora
-          opt.textContent = `${user.name} (${user.role})`;
+          opt.value = user.id; 
+          opt.textContent = `${user.name}`;
           userSelect.appendChild(opt);
       });
       
-      // Atualiza lista na tela de Admin se estiver aberta
       renderAdminUsersList();
   });
 
@@ -176,14 +167,13 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('app').classList.remove('hidden');
     document.getElementById('app').classList.add('flex');
     
-    // Inicia Módulos
     initializeKanban();
     listenToServiceOrders();
     listenToNotifications();
     listenToCloudinaryConfigs();
     
-    // Permissões de Admin (Gestor vê tudo)
-    if (user.role === 'Gestor' || user.role === 'Desenvolvedor' || user.name === 'Thiago Ventura Valencio') {
+    // PERMISSÕES ESPECIAIS (THIAGO = MASTER)
+    if (user.role === 'Gestor' || user.name === 'Thiago Ventura Valencio') {
       document.getElementById('adminBtn').classList.remove('hidden');
       document.getElementById('reportsBtn').classList.remove('hidden');
     } else {
@@ -192,7 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // --- KANBAN BOARD (LAYOUT CORRIGIDO) ---
+  // --- KANBAN BOARD (LAYOUT CORRIGIDO - Flex + Width Fixo) ---
   const initializeKanban = () => {
     const board = document.getElementById('kanbanBoard');
     const collapsedState = JSON.parse(localStorage.getItem('collapsedColumnsMenechelli')) || {};
@@ -201,9 +191,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const isCollapsed = collapsedState[status];
       const formatStatus = status.replace(/-/g, ' ');
       
-      // AJUSTE DE LARGURA: Aumentado para 320px no Desktop para não ficar apertado
       return `
-        <div class="flex-shrink-0 w-[90vw] sm:w-[320px] flex flex-col h-full bg-gray-200 rounded-xl shadow-inner border border-gray-300 snap-center transition-all duration-300">
+        <div class="flex-shrink-0 w-[85vw] sm:w-[320px] flex flex-col h-full bg-gray-200 rounded-xl shadow-inner border border-gray-300 snap-center transition-all duration-300">
             <div class="p-3 bg-gray-300 rounded-t-xl flex justify-between items-center cursor-pointer select-none toggle-column-header hover:bg-gray-400 transition-colors" data-status="${status}">
                 <div class="flex items-center gap-2 overflow-hidden">
                     <div class="w-3 h-3 flex-shrink-0 rounded-full ${getStatusColor(status)}"></div>
@@ -360,9 +349,9 @@ document.addEventListener('DOMContentLoaded', () => {
           obsDiv.classList.add('hidden');
       }
       
-      // Controle do Botão Excluir (Só Gestor/Desenvolvedor)
+      // Controle do Botão Excluir (Só Gestor/Desenvolvedor/Thiago)
       const delBtn = document.getElementById('deleteOsBtn');
-      if (currentUser.role === 'Gestor' || currentUser.role === 'Desenvolvedor' || currentUser.name === 'Thiago Ventura Valencio') {
+      if (currentUser.role === 'Gestor' || currentUser.name === 'Thiago Ventura Valencio') {
           delBtn.classList.remove('hidden');
       } else {
           delBtn.classList.add('hidden');
@@ -426,8 +415,8 @@ document.addEventListener('DOMContentLoaded', () => {
               icon = '<i class="bx bxs-file-pdf text-4xl text-red-500"></i>';
           }
 
-          // Botão Delete (Gestor/Desenvolvedor)
-          const canDelete = currentUser && (currentUser.role === 'Gestor' || currentUser.role === 'Desenvolvedor' || currentUser.name === 'Thiago Ventura Valencio');
+          // Botão Delete (Gestor/Desenvolvedor/Thiago)
+          const canDelete = currentUser && (currentUser.role === 'Gestor' || currentUser.name === 'Thiago Ventura Valencio');
 
           return `
           <div class="relative aspect-square bg-gray-800 rounded-lg overflow-hidden cursor-pointer group shadow-sm hover:shadow-md transition-all border border-gray-200" onclick="openLightbox(${idx})">
