@@ -14,24 +14,25 @@ const firebaseConfig = {
 };
 
 /* ==================================================================
-   CONFIGURAÇÃO DE USUÁRIOS (Menechelli)
+   CONFIGURAÇÃO DE USUÁRIOS (Menechelli + Desenvolvedor)
 ================================================================== */
 const USERS = [
-  // GESTORES
-  { name: 'Admin Menechelli', role: 'Gestor', password: 'admin' }, 
+  // --- ACESSO MESTRE (VOCÊ) ---
+  { name: 'Thiago Ventura Valencio', role: 'Desenvolvedor', password: '1940' }, // Defina sua senha aqui
+
+  // --- GESTORES DO CLIENTE ---
+  { name: 'Anderson Menechelli', role: 'Gestor', password: 'admin' }, 
   { name: 'Gerente Oficina', role: 'Gestor', password: '1234' },
   
-  // ATENDENTES
-  { name: 'Recepção 01', role: 'Atendente', password: '1234' },
-  
-  // MECÂNICOS
+  // --- EQUIPE ---
+  { name: 'Marcelo Alef Garbina', role: 'Atendente', password: 'marcelo' },
   { name: 'Mecânico 01', role: 'Mecânico', password: '1234' },
   { name: 'Mecânico 02', role: 'Mecânico', password: '1234' },
   { name: 'Eletricista', role: 'Mecânico', password: '1234' }
 ];
 
 // Usuários com permissão "Super Admin" (podem deletar mídia e acessar config)
-const USERS_CAN_DELETE_MEDIA = ['Admin Menechelli', 'Gerente Oficina'];
+const USERS_CAN_DELETE_MEDIA = ['Admin Menechelli', 'Thiago Ventura Valencio'];
 
 /* ==================================================================
    LÓGICA DO SISTEMA (CLOUDINARY + REALTIME DATABASE)
@@ -191,7 +192,8 @@ document.addEventListener('DOMContentLoaded', () => {
     listenToCloudinaryConfigs();
     scheduleDailyLogout();
 
-    if (user.role === 'Gestor') {
+    // Habilita ADMIN para Gestor e Desenvolvedor
+    if (user.role === 'Gestor' || user.role === 'Desenvolvedor') {
       adminBtn.classList.remove('hidden');
       reportsBtn.classList.remove('hidden');
     }
@@ -377,7 +379,8 @@ document.addEventListener('DOMContentLoaded', () => {
           obsDiv.classList.add('hidden');
       }
       
-      if (currentUser.role === 'Gestor' || currentUser.role === 'Atendente') {
+      // Permissões: Gestores, Atendentes E Desenvolvedor
+      if (currentUser.role === 'Gestor' || currentUser.role === 'Atendente' || currentUser.role === 'Desenvolvedor') {
           deleteOsBtn.classList.remove('hidden');
       } else {
           deleteOsBtn.classList.add('hidden');
