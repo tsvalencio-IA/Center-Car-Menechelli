@@ -1,0 +1,191 @@
+
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>thIAguinho V21 - MEMÓRIA TOTAL & INTELIGÊNCIA</title>
+    
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+
+    <style>
+        /* Estilos mantidos da sua versão original */
+        html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #111 !important; font-family: 'Roboto', sans-serif; }
+        #overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; color: white; padding: 20px; transition: opacity 0.5s; }
+        #overlay.hidden { opacity: 0; pointer-events: none; }
+        .scan-line { width: 100%; height: 2px; background: #00ff00; position: absolute; top: 50%; animation: scan 2s infinite ease-in-out; box-shadow: 0 0 10px #00ff00; }
+        @keyframes scan { 0% { transform: translateY(-150px); opacity: 0; } 50% { opacity: 1; } 100% { transform: translateY(150px); opacity: 0; } }
+        #ui-layer { position: absolute; bottom: 0; left: 0; width: 100%; padding: 20px; box-sizing: border-box; z-index: 20; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); pointer-events: none; }
+        .chat-box { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-radius: 15px; padding: 15px; margin-bottom: 15px; max-height: 200px; overflow-y: auto; pointer-events: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.5); }
+        .controls { display: flex; gap: 10px; pointer-events: auto; }
+        input[type="text"] { flex: 1; padding: 12px; border: none; border-radius: 25px; background: rgba(255,255,255,0.9); font-size: 16px; outline: none; box-shadow: inset 0 2px 5px rgba(0,0,0,0.1); }
+        button { border: none; border-radius: 50%; width: 50px; height: 50px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 24px; transition: transform 0.2s, background 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        button:active { transform: scale(0.95); }
+        #micBtn { background: #3b82f6; color: white; }
+        #micBtn.listening { background: #ef4444; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+        #sendBtn { background: #10b981; color: white; }
+        #backBtn { position: absolute; top: 20px; left: 20px; z-index: 30; background: rgba(255,255,255,0.2); color: white; border-radius: 8px; width: auto; height: auto; padding: 8px 12px; font-size: 14px; pointer-events: auto; text-decoration: none; display: flex; align-items: center; gap: 5px; backdrop-filter: blur(4px); }
+    </style>
+</head>
+<body>
+
+    <a href="index.html" id="backBtn"><i class='bx bx-arrow-back'></i> Voltar</a>
+
+    <div id="overlay">
+        <div class="scan-line"></div>
+        <i class='bx bxs-microchip' style="font-size: 60px; color: #00ff00; margin-bottom: 20px;"></i>
+        <h2>thIAguinho V2.1</h2>
+        <p>Aponte para o Motor ou Peça</p>
+        <p style="font-size: 12px; opacity: 0.7; margin-top: 10px;">Carregando Rede Neural...</p>
+    </div>
+
+    <!-- AR SCENE -->
+    <a-scene mindar-image="imageTargetSrc: ./targets.mind; filterMinCF:0.0001; filterBeta: 0.001;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+        <a-assets>
+            <video id="vid" src="./videos/intro_ia.mp4" loop="true" crossorigin="anonymous"></video>
+        </a-assets>
+
+        <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+        <a-entity id="targetEntity" mindar-image-target="targetIndex: 0">
+            <a-plane src="#vid" position="0 0 0" height="0.552" width="1" rotation="0 0 0"></a-plane>
+        </a-entity>
+    </a-scene>
+
+    <div id="ui-layer">
+        <div id="chat-box" class="chat-box">
+            <p style="color: #666; font-size: 14px;">Olá, sou o thIAguinho. Identifiquei o veículo. O que deseja saber?</p>
+        </div>
+        <div class="controls">
+            <button id="micBtn"><i class='bx bxs-microphone'></i></button>
+            <input type="text" id="inputEl" placeholder="Pergunte sobre a peça...">
+            <button id="sendBtn"><i class='bx bxs-send'></i></button>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyB5JpYm8l0AlF5ZG3HtkyFZgmrpsUrDhv0",
+            authDomain: "dashboard-oficina-pro.firebaseapp.com",
+            databaseURL: "https://dashboard-oficina-pro-default-rtdb.firebaseio.com",
+            projectId: "dashboard-oficina-pro",
+            storageBucket: "dashboard-oficina-pro.appspot.com",
+            messagingSenderId: "736157192887",
+            appId: "1:736157192887:web:c23d3daade848a33d67332"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // Variável para armazenar a chave Gemini buscada do banco
+        let GEMINI_API_KEY = "";
+
+        // Busca a chave do banco assim que carrega
+        db.ref('system_config/apiKeys/gemini_api_key').once('value').then(snap => {
+            GEMINI_API_KEY = snap.val();
+            if(!GEMINI_API_KEY) {
+                appendMsg("thIAguinho", "Alerta: Chave Gemini não configurada no Admin.");
+            }
+        });
+
+        const targetEntity = document.querySelector('#targetEntity');
+        const overlay = document.querySelector('#overlay');
+        const videoEl = document.querySelector('#vid');
+        const chatBox = document.querySelector('#chat-box');
+        const inputEl = document.querySelector('#inputEl');
+        const sendBtn = document.querySelector('#sendBtn');
+        const micBtn = document.querySelector('#micBtn');
+        
+        let isSpeaking = false;
+        let isTargetVisible = false;
+
+        function appendMsg(sender, text) {
+            const p = document.createElement('p');
+            p.innerHTML = `<strong>${sender}:</strong> ${text}`;
+            chatBox.appendChild(p);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        async function askGemini(prompt) {
+            if (!prompt) return;
+            appendMsg("Você", prompt);
+            inputEl.value = '';
+
+            if(!GEMINI_API_KEY) {
+                appendMsg("Sistema", "Erro: Chave API ausente.");
+                return;
+            }
+
+            try {
+                // Aqui usamos a lógica do seu app original, mas com a chave dinâmica
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`;
+                
+                // Contexto da Oficina para a IA
+                const systemContext = "Você é o thIAguinho, um assistente mecânico sênior da Oficina Chevron. Responda de forma técnica mas acessível sobre mecânica automotiva.";
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: `${systemContext}\n\nUsuário: ${prompt}` }] }]
+                    })
+                });
+
+                const data = await response.json();
+                const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "Desculpe, falha nos meus circuitos.";
+                
+                appendMsg("thIAguinho", reply);
+                speak(reply);
+
+            } catch (error) {
+                appendMsg("Erro", "Falha na conexão neural.");
+                console.error(error);
+            }
+        }
+
+        function speak(text) {
+            if (window.speechSynthesis.speaking) window.speechSynthesis.cancel();
+            const u = new SpeechSynthesisUtterance(text);
+            u.lang = 'pt-BR';
+            // Tenta pegar uma voz masculina se disponível
+            const voices = window.speechSynthesis.getVoices();
+            const maleVoice = voices.find(v => v.name.includes('Google') && v.name.includes('Portuguese')) || voices.find(v => v.lang === 'pt-BR');
+            if(maleVoice) u.voice = maleVoice;
+            
+            u.onstart = () => { isSpeaking = true; if(isTargetVisible) videoEl.play(); };
+            u.onend = () => { isSpeaking = false; videoEl.pause(); videoEl.currentTime=0; };
+            window.speechSynthesis.speak(u);
+        }
+
+        // Eventos AR
+        targetEntity.addEventListener("targetFound", () => { isTargetVisible = true; overlay.classList.add('hidden'); if(isSpeaking) videoEl.play(); });
+        targetEntity.addEventListener("targetLost", () => { isTargetVisible = false; overlay.classList.remove('hidden'); videoEl.pause(); });
+
+        // Reconhecimento de Voz
+        if (window.webkitSpeechRecognition) {
+            const r = new webkitSpeechRecognition(); 
+            r.lang = 'pt-BR';
+            micBtn.addEventListener('click', () => { 
+                if(micBtn.classList.contains('listening')) { r.stop(); } 
+                else { r.start(); micBtn.classList.add('listening'); inputEl.placeholder="Ouvindo..."; } 
+            });
+            r.onresult = (e) => { 
+                inputEl.value = e.results[0][0].transcript; 
+                micBtn.classList.remove('listening'); 
+                inputEl.placeholder="Processando..."; 
+                askGemini(inputEl.value); 
+            };
+            r.onend = () => { micBtn.classList.remove('listening'); inputEl.placeholder="Pergunte sobre a peça..."; };
+        } else micBtn.style.display = 'none';
+        
+        sendBtn.addEventListener('click', () => askGemini(inputEl.value));
+        inputEl.addEventListener('keypress', (e) => { if(e.key === 'Enter') askGemini(inputEl.value); });
+
+    </script>
+</body>
+</html>
