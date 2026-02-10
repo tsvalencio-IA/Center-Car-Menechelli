@@ -1,5 +1,5 @@
 /* ==================================================================
-   DASHBOARD CENTER CAR MENECHELLI - V3.8 (SESSION & MOBILE MENU)
+   DASHBOARD CENTER CAR MENECHELLI - V3.9 (HYBRID MENU & FIXED EDIT)
    Desenvolvido por: thIAguinho Soluções
    ================================================================== */
 
@@ -80,23 +80,16 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
           const session = JSON.parse(stored);
           const now = new Date();
-          
-          // Data de corte hoje às 19:00
           const cutoff = new Date();
           cutoff.setHours(19, 0, 0, 0);
 
-          // Se agora já passou das 19h e o login foi feito antes das 19h de hoje (ou dias anteriores), desloga
-          // Ou seja: a sessão é válida apenas para o "dia de trabalho" até as 19h.
-          // Se o usuário logar APÓS as 19h, ele pode ficar até as 19h do dia seguinte?
-          // Regra simples do Chevron: Passou das 19h = Logout forçado se a página for recarregada.
-          
+          // Logout se for um novo dia ou já passou das 19h com login antigo
           if (now > cutoff && new Date(session.loginTime) < cutoff) {
               localStorage.removeItem(SESSION_KEY);
               showNotification("Sessão expirada (fechamento diário).", "error");
               return;
           }
 
-          // Restaura Sessão
           performLogin(session.user);
       } catch (e) {
           console.error("Sessão inválida", e);
@@ -120,7 +113,6 @@ document.addEventListener('DOMContentLoaded', () => {
               select.appendChild(opt);
           });
       }
-      // Tenta restaurar sessão após carregar usuários (opcional, mas bom pra garantir consistência)
       if (!currentUser) checkSession();
   });
 
@@ -137,23 +129,28 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('app').classList.remove('hidden');
       document.getElementById('app').classList.add('flex');
       
-      // Atualiza UI do Usuário
       document.getElementById('currentUserName').textContent = user.name.split(' ')[0];
       document.getElementById('currentUserRole').textContent = user.role;
       
-      // Permissões de Gestor
       const isManager = user.role === 'Gestor' || user.name.includes('Thiago');
-      const adminBtn = document.getElementById('adminBtn');
-      const reportsBtn = document.getElementById('reportsBtn');
+      
+      // Controle de Botões Híbrido (Desktop & Mobile)
+      const desktopActions = document.getElementById('desktopAdminActions');
+      const mobileAdmin = document.getElementById('adminBtnMobile');
+      const mobileReports = document.getElementById('reportsBtnMobile');
       const adminZone = document.getElementById('adminZone');
 
       if (isManager) {
-          if(adminBtn) adminBtn.classList.remove('hidden');
-          if(reportsBtn) reportsBtn.classList.remove('hidden');
+          if(desktopActions) desktopActions.classList.remove('hidden');
+          if(desktopActions) desktopActions.classList.add('md:flex'); // Garante que apareça em desktop
+          if(mobileAdmin) mobileAdmin.classList.remove('hidden');
+          if(mobileReports) mobileReports.classList.remove('hidden');
           if(adminZone) adminZone.classList.remove('hidden');
       } else {
-          if(adminBtn) adminBtn.classList.add('hidden');
-          if(reportsBtn) reportsBtn.classList.add('hidden');
+          if(desktopActions) desktopActions.classList.add('hidden');
+          if(desktopActions) desktopActions.classList.remove('md:flex');
+          if(mobileAdmin) mobileAdmin.classList.add('hidden');
+          if(mobileReports) mobileReports.classList.add('hidden');
           if(adminZone) adminZone.classList.add('hidden');
       }
 
@@ -168,15 +165,11 @@ document.addEventListener('DOMContentLoaded', () => {
           const selectVal = document.getElementById('userSelect').value;
           const pass = document.getElementById('passwordInput').value;
           
-          if(!selectVal) {
-              document.getElementById('loginError').textContent = "Selecione um usuário.";
-              return;
-          }
+          if(!selectVal) { document.getElementById('loginError').textContent = "Selecione um usuário."; return; }
           
           try {
               const user = JSON.parse(selectVal);
               if (user.password === pass) {
-                  // Salva Sessão
                   localStorage.setItem(SESSION_KEY, JSON.stringify({
                       user: user,
                       loginTime: new Date().toISOString()
@@ -185,31 +178,26 @@ document.addEventListener('DOMContentLoaded', () => {
               } else {
                   document.getElementById('loginError').textContent = "SENHA INCORRETA";
               }
-          } catch (err) {
-              console.error("Erro login:", err);
-          }
+          } catch (err) { console.error("Erro login:", err); }
       };
   }
 
-  // LOGOUT
   document.getElementById('logoutButton').onclick = () => {
       localStorage.removeItem(SESSION_KEY);
       location.reload();
   };
 
-  // MENU DO USUÁRIO (MOBILE/DESKTOP TOGGLE)
+  // MENU DO USUÁRIO
   const userMenuBtn = document.getElementById('userMenuBtn');
   const userDropdown = document.getElementById('userDropdown');
   
-  // Toggle simples ao clicar no ícone do usuário
   if (userMenuBtn) {
       userMenuBtn.onclick = (e) => {
-          e.stopPropagation(); // Impede que o clique feche imediatamente
+          e.stopPropagation();
           userDropdown.classList.toggle('hidden');
       };
   }
 
-  // Fechar menu ao clicar fora
   document.addEventListener('click', (e) => {
       if (userDropdown && !userDropdown.classList.contains('hidden')) {
           if (!userDropdown.contains(e.target) && e.target !== userMenuBtn) {
@@ -218,20 +206,28 @@ document.addEventListener('DOMContentLoaded', () => {
       }
   });
   
-  // Botões do Menu (Admin/Relatórios)
-  const adminBtn = document.getElementById('adminBtn');
-  if(adminBtn) adminBtn.onclick = () => {
+  // Handlers para Desktop E Mobile
+  const openAdmin = () => {
       document.getElementById('adminModal').classList.remove('hidden');
       document.getElementById('adminModal').classList.add('flex');
-      userDropdown.classList.add('hidden'); // Fecha menu
+      if(userDropdown) userDropdown.classList.add('hidden');
   };
-
-  const reportsBtn = document.getElementById('reportsBtn');
-  if(reportsBtn) reportsBtn.onclick = () => {
+  
+  const openReports = () => {
       document.getElementById('reportsModal').classList.remove('hidden');
       document.getElementById('reportsModal').classList.add('flex');
-      userDropdown.classList.add('hidden');
+      if(userDropdown) userDropdown.classList.add('hidden');
   };
+
+  const adminBtn = document.getElementById('adminBtn');
+  const adminBtnMobile = document.getElementById('adminBtnMobile');
+  if(adminBtn) adminBtn.onclick = openAdmin;
+  if(adminBtnMobile) adminBtnMobile.onclick = openAdmin;
+
+  const reportsBtn = document.getElementById('reportsBtn');
+  const reportsBtnMobile = document.getElementById('reportsBtnMobile');
+  if(reportsBtn) reportsBtn.onclick = openReports;
+  if(reportsBtnMobile) reportsBtnMobile.onclick = openReports;
 
   // 5. KANBAN RENDERER
   const initKanban = () => {
@@ -277,7 +273,6 @@ document.addEventListener('DOMContentLoaded', () => {
           
           updateAlerts();
           
-          // Atualiza modal se aberto
           const modal = document.getElementById('detailsModal');
           const openLogId = document.getElementById('logOsId');
           if(modal && !modal.classList.contains('hidden') && openLogId && openLogId.value) {
@@ -398,7 +393,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const refreshDetailsView = (os) => {
-      const isManager = currentUser && (currentUser.role === 'Gestor' || currentUser.name.includes('Thiago'));
+      const isManager = currentUser && (currentUser.role === 'Gestor' || (currentUser.name && currentUser.name.includes('Thiago')));
       
       const editable = (field, value, label) => {
           if (!isManager) return `<span class="font-bold text-slate-700">${value || '-'}</span>`;
@@ -472,19 +467,18 @@ document.addEventListener('DOMContentLoaded', () => {
       }
   };
 
-  // --- FUNÇÕES GLOBAIS DE EDIÇÃO ---
+  // --- FUNÇÕES GLOBAIS ---
   window.toggleEdit = (field, osId, isPrompt = false) => {
       if(isPrompt && field === 'placa') {
           const os = allServiceOrders[osId];
           const newPlaca = prompt("Editar Placa:", os.placa);
           if(newPlaca && newPlaca !== os.placa) {
               const updates = { placa: newPlaca.toUpperCase() };
-              firebase.database().ref(`serviceOrders/${osId}`).update(updates);
+              db.ref(`serviceOrders/${osId}`).update(updates);
               logEdit(osId, 'Placa', os.placa, newPlaca.toUpperCase());
           }
           return;
       }
-
       const viewEl = document.getElementById(`view-${field}`);
       const editEl = document.getElementById(`edit-${field}`);
       if(viewEl && editEl) {
@@ -510,14 +504,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const input = document.getElementById(`input-${field}`);
       const os = allServiceOrders[osId];
       if(!input || !os) return;
-
       const newValue = input.value.trim();
       const oldValue = os[field] || '';
-
       if (newValue !== oldValue) {
           const updates = {};
           updates[field] = newValue;
-          firebase.database().ref(`serviceOrders/${osId}`).update(updates);
+          db.ref(`serviceOrders/${osId}`).update(updates);
           logEdit(osId, field, oldValue, newValue);
           showNotification('Informação atualizada!');
       }
@@ -528,8 +520,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const input = document.getElementById('quickKmInput');
       if(!input || !input.value) return;
       const newKm = input.value;
-      firebase.database().ref(`serviceOrders/${osId}`).update({ km: newKm });
-      firebase.database().ref(`serviceOrders/${osId}/logs`).push({
+      db.ref(`serviceOrders/${osId}`).update({ km: newKm });
+      db.ref(`serviceOrders/${osId}/logs`).push({
           user: currentUser.name,
           timestamp: new Date().toISOString(),
           description: `KM atualizado: ${newKm} km`,
@@ -540,7 +532,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const logEdit = (osId, field, oldVal, newVal) => {
-      firebase.database().ref(`serviceOrders/${osId}/logs`).push({
+      db.ref(`serviceOrders/${osId}/logs`).push({
           user: currentUser.name,
           timestamp: new Date().toISOString(),
           description: `EDITADO: ${field} alterado de "${oldVal}" para "${newVal}".`,
@@ -548,77 +540,22 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   };
 
-  // --- IMPRESSÃO ---
   const printOS = (os) => {
       const logs = os.logs ? Object.values(os.logs).sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp)) : [];
       let totalPecas = 0;
-
       const linhasTabela = logs.map(log => {
           const valor = log.value ? parseFloat(log.value) : 0;
           totalPecas += valor;
-          return `
-          <tr>
-              <td>${new Date(log.timestamp).toLocaleString('pt-BR')}</td>
-              <td>${log.user}</td>
-              <td>${log.description}</td>
-              <td>${log.parts || '-'}</td>
-              <td class="text-right">${valor > 0 ? `R$ ${valor.toFixed(2)}` : '-'}</td>
-          </tr>`;
+          return `<tr><td>${new Date(log.timestamp).toLocaleString('pt-BR')}</td><td>${log.user}</td><td>${log.description}</td><td>${log.parts || '-'}</td><td class="text-right">${valor > 0 ? `R$ ${valor.toFixed(2)}` : '-'}</td></tr>`;
       }).join('');
-
       const midia = os.media ? Object.values(os.media).filter(m => m && ( (m.type && m.type.includes('image')) || (m.url && m.url.match(/\.(jpeg|jpg|png|webp)$/i)) )).slice(0, 6) : []; 
       const fotosHtml = midia.length ? `<div class="section"><h3>Registro Fotográfico</h3><div class="photos-grid">${midia.map(m => `<div class="photo-box"><img src="${m.url}"></div>`).join('')}</div></div>` : '';
-
-      const printContent = `
-        <html>
-        <head>
-            <title>OS ${os.placa}</title>
-            <style>
-                body { font-family: sans-serif; font-size: 12px; color: #333; padding: 20px; }
-                .header { text-align: center; border-bottom: 2px solid #1e40af; padding-bottom: 10px; margin-bottom: 20px; }
-                .header h1 { margin: 0; color: #1e40af; font-size: 24px; text-transform: uppercase; }
-                .header p { margin: 2px 0; font-size: 10px; color: #666; }
-                .box { border: 1px solid #ccc; border-radius: 5px; padding: 10px; margin-bottom: 15px; }
-                .info-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-                h3 { font-size: 14px; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-top: 0; text-transform: uppercase; color: #444; }
-                table { width: 100%; border-collapse: collapse; font-size: 11px; }
-                th { background: #f3f4f6; text-align: left; padding: 5px; border-bottom: 1px solid #ddd; }
-                td { padding: 5px; border-bottom: 1px solid #eee; vertical-align: top; }
-                .text-right { text-align: right; }
-                .total { text-align: right; font-size: 16px; font-weight: bold; margin-top: 10px; color: #1e40af; }
-                .photos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-                .photo-box img { width: 100%; height: 150px; object-fit: cover; border: 1px solid #ddd; }
-                .footer { margin-top: 40px; text-align: center; font-size: 10px; color: #999; border-top: 1px solid #ccc; padding-top: 10px; }
-                @media print { body { padding: 0; } }
-            </style>
-        </head>
-        <body>
-            <div class="header"><h1>Center Car Menechelli</h1><p>Relatório Técnico • Emitido em ${new Date().toLocaleString('pt-BR')}</p></div>
-            <div class="box"><div class="info-grid">
-                <div><strong>Placa:</strong> ${os.placa}</div>
-                <div><strong>Modelo:</strong> ${os.modelo || '-'}</div>
-                <div><strong>KM:</strong> ${os.km || '-'}</div>
-                <div><strong>Cliente:</strong> ${os.cliente || '-'}</div>
-                <div><strong>Tel:</strong> ${os.telefone || '-'}</div>
-                <div><strong>Consultor:</strong> ${os.responsible || '-'}</div>
-            </div></div>
-            ${os.observacoes ? `<div class="box"><h3>Reclamação Inicial</h3><p>${os.observacoes}</p></div>` : ''}
-            <div class="box">
-                <h3>Histórico de Serviços</h3>
-                <table><thead><tr><th>Data</th><th>Técnico</th><th>Descrição</th><th>Peças</th><th class="text-right">Valor</th></tr></thead><tbody>${linhasTabela || '<tr><td colspan="5" style="text-align:center">Sem registros</td></tr>'}</tbody></table>
-                <div class="total">Total Estimado: R$ ${totalPecas.toFixed(2)}</div>
-            </div>
-            ${fotosHtml}
-            <div class="footer"><p>Documento interno.</p><p>Sistema Desenvolvido por thIAguinho Soluções</p></div>
-            <script>window.print();</script>
-        </body></html>`;
-      
+      const printContent = `<html><head><title>OS ${os.placa}</title><style>body{font-family:sans-serif;font-size:12px;color:#333;padding:20px}.header{text-align:center;border-bottom:2px solid #1e40af;padding-bottom:10px;margin-bottom:20px}.header h1{margin:0;color:#1e40af;font-size:24px;text-transform:uppercase}.header p{margin:2px 0;font-size:10px;color:#666}.box{border:1px solid #ccc;border-radius:5px;padding:10px;margin-bottom:15px}.info-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}h3{font-size:14px;border-bottom:1px solid #eee;padding-bottom:5px;margin-top:0;text-transform:uppercase;color:#444}table{width:100%;border-collapse:collapse;font-size:11px}th{background:#f3f4f6;text-align:left;padding:5px;border-bottom:1px solid #ddd}td{padding:5px;border-bottom:1px solid #eee;vertical-align:top}.text-right{text-align:right}.total{text-align:right;font-size:16px;font-weight:bold;margin-top:10px;color:#1e40af}.photos-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.photo-box img{width:100%;height:150px;object-fit:cover;border:1px solid #ddd}.footer{margin-top:40px;text-align:center;font-size:10px;color:#999;border-top:1px solid #ccc;padding-top:10px}@media print{body{padding:0}}</style></head><body><div class="header"><h1>Center Car Menechelli</h1><p>Relatório Técnico • Emitido em ${new Date().toLocaleString('pt-BR')}</p></div><div class="box"><div class="info-grid"><div><strong>Placa:</strong> ${os.placa}</div><div><strong>Modelo:</strong> ${os.modelo || '-'}</div><div><strong>KM:</strong> ${os.km || '-'}</div><div><strong>Cliente:</strong> ${os.cliente || '-'}</div><div><strong>Tel:</strong> ${os.telefone || '-'}</div><div><strong>Consultor:</strong> ${os.responsible || '-'}</div></div></div>${os.observacoes ? `<div class="box"><h3>Reclamação Inicial</h3><p>${os.observacoes}</p></div>` : ''}<div class="box"><h3>Histórico de Serviços</h3><table><thead><tr><th>Data</th><th>Técnico</th><th>Descrição</th><th>Peças</th><th class="text-right">Valor</th></tr></thead><tbody>${linhasTabela || '<tr><td colspan="5" style="text-align:center">Sem registros</td></tr>'}</tbody></table><div class="total">Total Estimado: R$ ${totalPecas.toFixed(2)}</div></div>${fotosHtml}<div class="footer"><p>Documento interno.</p><p>Sistema Desenvolvido por thIAguinho Soluções</p></div><script>window.print();</script></body></html>`;
       const win = window.open('', '', 'width=900,height=800');
       win.document.write(printContent);
       win.document.close();
   };
 
-  // --- ACTIONS FORM ---
   const logForm = document.getElementById('logForm');
   if(logForm) {
       logForm.onsubmit = async (e) => {
@@ -626,19 +563,17 @@ document.addEventListener('DOMContentLoaded', () => {
           const btn = e.target.querySelector('button[type="submit"]');
           const originalText = btn.innerHTML;
           btn.disabled = true; btn.innerHTML = 'Salvando...';
-          
           const osId = document.getElementById('logOsId').value;
           try {
               if(filesToUpload.length) {
                   const res = await Promise.all(filesToUpload.map(f => uploadFileToCloudinary(f)));
-                  res.forEach(r => firebase.database().ref(`serviceOrders/${osId}/media`).push(r));
+                  res.forEach(r => db.ref(`serviceOrders/${osId}/media`).push(r));
               }
               const desc = document.getElementById('logDescricao').value;
               const parts = document.getElementById('logPecas').value;
               const val = document.getElementById('logValor').value;
-
               if(desc || parts || val) {
-                  await firebase.database().ref(`serviceOrders/${osId}/logs`).push({
+                  await db.ref(`serviceOrders/${osId}/logs`).push({
                       user: currentUser.name,
                       timestamp: new Date().toISOString(),
                       description: desc,
@@ -661,7 +596,6 @@ document.addEventListener('DOMContentLoaded', () => {
       };
   }
 
-  // --- UTILS ---
   const btnNext = document.getElementById('btn-move-next');
   const btnPrev = document.getElementById('btn-move-prev');
   const btnStay = document.getElementById('btn-stay');
@@ -682,11 +616,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       const alertPanel = document.getElementById('attention-panel');
       if(alertPanel) {
-          alertPanel.innerHTML = alerts.map(o => `
-              <div class="bg-slate-700 p-3 rounded border-l-4 ${o.status.includes('Mecanico') ? 'border-yellow-500' : 'border-green-500'} cursor-pointer hover:bg-slate-600 transition" onclick="window.openDetails('${o.id}')">
-                  <p class="text-[10px] font-bold text-white uppercase opacity-70">${o.status.replace(/-/g,' ')}</p>
-                  <div class="flex justify-between items-center text-white font-bold"><span>${o.placa}</span> <span class="text-xs font-normal opacity-50">${o.modelo}</span></div>
-              </div>`).join('');
+          alertPanel.innerHTML = alerts.map(o => `<div class="bg-slate-700 p-3 rounded border-l-4 ${o.status.includes('Mecanico') ? 'border-yellow-500' : 'border-green-500'} cursor-pointer hover:bg-slate-600 transition" onclick="window.openDetails('${o.id}')"><p class="text-[10px] font-bold text-white uppercase opacity-70">${o.status.replace(/-/g,' ')}</p><div class="flex justify-between items-center text-white font-bold"><span>${o.placa}</span> <span class="text-xs font-normal opacity-50">${o.modelo}</span></div></div>`).join('');
       }
   };
 
@@ -745,7 +675,7 @@ document.addEventListener('DOMContentLoaded', () => {
           status: 'Aguardando-Mecanico',
           createdAt: new Date().toISOString()
       };
-      firebase.database().ref('serviceOrders').push(newOS);
+      db.ref('serviceOrders').push(newOS);
       document.getElementById('osModal').classList.add('hidden');
       showNotification('Nova Ficha Criada!');
   };
@@ -783,7 +713,7 @@ document.addEventListener('DOMContentLoaded', () => {
               ${currentUser && currentUser.role === 'Gestor' ? `<button onclick="deleteLog('${os.id}','${key}')" class="text-[10px] text-red-300 hover:text-red-500 mt-1">Excluir</button>` : ''}
           </div>`).join('');
   };
-  window.deleteLog = (osId, key) => { if(confirm('Excluir log?')) firebase.database().ref(`serviceOrders/${osId}/logs/${key}`).remove(); };
+  window.deleteLog = (osId, key) => { if(confirm('Excluir log?')) db.ref(`serviceOrders/${osId}/logs/${key}`).remove(); };
 
   const renderGallery = (os) => {
       const grid = document.getElementById('thumbnail-grid');
@@ -805,7 +735,7 @@ document.addEventListener('DOMContentLoaded', () => {
               ${canDelete ? `<button onclick="event.stopPropagation(); deleteMedia('${os.id}','${key}')" class="absolute top-1 right-1 bg-red-600 text-white w-6 h-6 rounded-full opacity-0 group-hover:opacity-100 transition flex items-center justify-center shadow">&times;</button>` : ''}
           </div>`}).join('');
   };
-  window.deleteMedia = (osId, key) => { if(confirm('Apagar imagem?')) firebase.database().ref(`serviceOrders/${osId}/media/${key}`).remove(); };
+  window.deleteMedia = (osId, key) => { if(confirm('Apagar imagem?')) db.ref(`serviceOrders/${osId}/media/${key}`).remove(); };
 
   window.openLightbox = (idx) => {
       currentLightboxIndex = idx;
