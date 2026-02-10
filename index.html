@@ -12,26 +12,25 @@
   <!-- TailwindCSS e Ícones -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css" rel=\"stylesheet\">
+  <link href="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body class="bg-slate-100 h-screen flex flex-col overflow-hidden">
 
   <!-- TELA DE LOGIN -->
   <div id="userScreen" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900 p-4">
-    <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-sm text-center border-t-8 border-blue-800 relative overflow-hidden">
+    <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-sm text-center border-t-8 border-blue-800 relative">
       <div class="absolute -right-10 -top-10 w-32 h-32 bg-yellow-400 rounded-full opacity-20"></div>
-      
       <div class="relative z-10">
           <h1 class="text-xl font-bold text-gray-600 mb-0">SISTEMA</h1>
           <h2 class="text-4xl font-black text-blue-900 mb-1 tracking-tighter">MENECHELLI</h2>
-          <p class="text-xs font-bold text-yellow-600 uppercase tracking-widest mb-8 border-b border-gray-100 pb-4">Center Car • Gestão Inteligente</p>
+          <p class="text-xs font-bold text-yellow-600 uppercase tracking-widest mb-8 border-b border-gray-100 pb-4">Gestão Inteligente v3.9</p>
           
           <form id="loginForm" class="text-left space-y-4">
             <div>
               <label class="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">Colaborador</label>
               <div class="relative">
-                <select id="userSelect" required class="appearance-none w-full p-3 bg-gray-50 border border-gray-200 rounded-xl font-bold text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+                <select id="userSelect" required class="appearance-none w-full p-3 bg-gray-50 border border-gray-200 rounded-xl font-bold text-gray-700 focus:ring-2 focus:ring-blue-500 outline-none">
                   <option value="">Carregando equipe...</option>
                 </select>
                 <i class='bx bx-chevron-down absolute right-3 top-3.5 text-xl text-gray-400'></i>
@@ -39,18 +38,16 @@
             </div>
             <div>
               <label class="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">Senha de Acesso</label>
-              <input type="password" id="passwordInput" required class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl font-bold text-gray-700 focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="••••••">
+              <input type="password" id="passwordInput" required class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl font-bold text-gray-700 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="••••••">
             </div>
-            <button type="submit" class="w-full btn bg-blue-800 hover:bg-blue-900 text-white py-4 rounded-xl text-sm font-bold shadow-lg shadow-blue-900/20 uppercase tracking-wide mt-2">
+            <button type="submit" class="w-full btn bg-blue-800 hover:bg-blue-900 text-white py-4 rounded-xl text-sm font-bold shadow-lg uppercase tracking-wide mt-2">
               <i class='bx bx-log-in-circle text-xl'></i> Acessar Painel
             </button>
             <p id="loginError" class="text-red-500 text-xs text-center h-4 font-bold"></p>
           </form>
       </div>
-      
       <div class="mt-8 pt-4 border-t border-gray-100 flex justify-center items-center gap-1 text-[10px] text-gray-400">
-          <span>Powered by</span> 
-          <strong class="text-blue-900 flex items-center gap-1">thIAguinho <i class='bx bxs-bot text-yellow-500'></i></strong>
+          <span>Powered by</span> <strong class="text-blue-900 flex items-center gap-1">thIAguinho <i class='bx bxs-bot text-yellow-500'></i></strong>
       </div>
     </div>
   </div>
@@ -60,6 +57,7 @@
     
     <!-- Header -->
     <header class="bg-white shadow-sm z-30 flex-shrink-0 relative">
+      <!-- Painel de Atenção (LEDs) -->
       <div id="attention-panel-container" class="bg-slate-800 overflow-hidden transition-all duration-300 max-h-0">
         <div id="attention-panel" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-3 container mx-auto"></div>
       </div>
@@ -73,16 +71,16 @@
             </button>
             <div class="hidden sm:block leading-tight">
                 <h1 class="text-lg font-black text-blue-900 tracking-tight">MENECHELLI</h1>
-                <p class="text-[10px] font-bold text-gray-400 uppercase">Gestão de Oficina v3.0</p>
+                <p class="text-[10px] font-bold text-gray-400 uppercase">Dashboard</p>
             </div>
         </div>
         
         <!-- Busca Central -->
         <div class="flex-grow max-w-2xl relative mx-2">
             <div class="relative group">
-                <i class='bx bx-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xl group-focus-within:text-blue-600 transition-colors'></i>
-                <input type="search" id="globalSearchInput" placeholder="Pesquisar Placa, Cliente ou Modelo..." 
-                       class="w-full py-2.5 pl-10 pr-4 bg-slate-100 border-none rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder-gray-400 text-sm font-medium">
+                <i class='bx bx-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xl'></i>
+                <input type="search" id="globalSearchInput" placeholder="Buscar Placa ou Cliente..." 
+                       class="w-full py-2.5 pl-10 pr-4 bg-slate-100 border-none rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium">
             </div>
             <div id="globalSearchResults" class="absolute top-full left-0 right-0 bg-white shadow-2xl rounded-xl mt-2 hidden z-50 max-h-[60vh] overflow-y-auto border border-gray-100 p-2 space-y-1"></div>
         </div>
@@ -90,7 +88,7 @@
         <!-- Ações Direita -->
         <div class="flex items-center gap-2">
           
-          <!-- BOTÕES DE GESTOR (DESKTOP) - Visíveis apenas em telas médias+ -->
+          <!-- BOTÕES DE GESTOR (DESKTOP) -->
           <div id="desktopAdminActions" class="hidden md:flex items-center gap-2 mr-2 border-r border-gray-200 pr-3">
               <button id="adminBtn" class="p-2 text-slate-400 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all" title="Configurações">
                   <i class='bx bxs-cog text-2xl'></i>
@@ -105,7 +103,7 @@
             <i class='bx bx-plus text-xl'></i> <span class="hidden sm:inline">NOVA O.S.</span>
           </button>
           
-          <!-- Menu Usuário (Dropdown) -->
+          <!-- Menu Usuário -->
           <div class="relative ml-2">
               <button id="userMenuBtn" class="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center text-slate-600 font-bold cursor-pointer border-2 border-white shadow-sm overflow-hidden hover:bg-slate-300 transition-colors">
                   <i class='bx bxs-user'></i>
@@ -120,7 +118,7 @@
                   </div>
                   
                   <div class="p-2 space-y-1">
-                      <!-- Opções de Gestor (MOBILE ONLY) - Visíveis apenas no dropdown em telas pequenas -->
+                      <!-- Opções de Gestor (MOBILE) -->
                       <button id="adminBtnMobile" class="md:hidden w-full text-left px-3 py-2 text-slate-600 hover:bg-slate-50 hover:text-blue-700 rounded-lg text-sm font-bold flex items-center gap-3">
                           <i class='bx bxs-cog text-xl'></i> Configurações
                       </button>
@@ -128,10 +126,10 @@
                           <i class='bx bxs-file-pdf text-xl'></i> Relatórios
                       </button>
                       
-                      <div class="border-t border-gray-100 my-1 md:hidden"></div>
+                      <div class="border-t border-gray-100 my-1"></div>
                       
                       <button id="logoutButton" class="w-full text-left px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg text-sm font-bold flex items-center gap-3">
-                          <i class='bx bx-log-out text-xl'></i> Sair do Sistema
+                          <i class='bx bx-log-out text-xl'></i> Sair
                       </button>
                   </div>
               </div>
@@ -142,15 +140,13 @@
 
     <!-- ÁREA KANBAN -->
     <main class="flex-grow overflow-y-auto p-4 sm:p-6 bg-slate-100">
-      <div id="kanbanBoard" class="w-full max-w-[1920px] mx-auto">
-        <!-- Colunas serão injetadas aqui pelo JS usando Grid CSS -->
-      </div>
+      <div id="kanbanBoard" class="w-full max-w-[1920px] mx-auto"></div>
     </main>
 
   </div>
 
   <!-- MODAL: NOVA OS -->
-  <div id="osModal" class="modal fixed inset-0 hidden items-center justify-center p-4">
+  <div id="osModal" class="modal hidden">
     <div class="modal-content w-full max-w-lg overflow-hidden">
       <div class="bg-blue-900 text-white p-4 flex justify-between items-center">
         <h2 class="font-bold text-lg flex items-center gap-2"><i class='bx bxs-folder-plus'></i> Abrir Nova Ficha</h2>
@@ -159,7 +155,6 @@
       <div class="p-6 overflow-y-auto max-h-[70vh]">
         <form id="osForm" class="space-y-4">
           <input type="hidden" id="osId">
-          <!-- Placa e Modelo -->
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Placa</label>
@@ -170,8 +165,6 @@
               <input id="osModelo" type="text" placeholder="Ex: Fiat Toro" required class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
             </div>
           </div>
-          
-          <!-- Cliente e Contato -->
           <div>
               <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Cliente</label>
               <input id="osCliente" type="text" placeholder="Nome Completo" required class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
@@ -186,37 +179,22 @@
                 <input id="osKm" type="number" placeholder="0" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
              </div>
           </div>
-
-          <!-- Responsável e Prioridade -->
           <div class="grid grid-cols-1 gap-4">
              <div>
                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Consultor Responsável</label>
                <select id="osResponsavel" required class="w-full p-3 bg-white border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"></select>
              </div>
           </div>
-
-          <!-- Queixa -->
           <div>
               <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Reclamação do Cliente</label>
               <textarea id="osObservacoes" rows="3" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none" placeholder="Descreva os problemas relatados..."></textarea>
           </div>
-
-          <!-- Prioridade Radios -->
           <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
               <label class="block text-xs font-bold text-gray-500 uppercase mb-2 text-center">Nível de Urgência</label>
               <div class="flex justify-between gap-2">
-                  <label class="cursor-pointer flex-1 text-center">
-                      <input type="radio" name="osPrioridade" value="verde" class="peer hidden" checked>
-                      <div class="p-2 rounded-lg border border-gray-200 text-gray-500 font-bold text-xs peer-checked:bg-green-500 peer-checked:text-white peer-checked:border-green-600 transition-all">NORMAL</div>
-                  </label>
-                  <label class="cursor-pointer flex-1 text-center">
-                      <input type="radio" name="osPrioridade" value="amarelo" class="peer hidden">
-                      <div class="p-2 rounded-lg border border-gray-200 text-gray-500 font-bold text-xs peer-checked:bg-yellow-500 peer-checked:text-white peer-checked:border-yellow-600 transition-all">ATENÇÃO</div>
-                  </label>
-                  <label class="cursor-pointer flex-1 text-center">
-                      <input type="radio" name="osPrioridade" value="vermelho" class="peer hidden">
-                      <div class="p-2 rounded-lg border border-gray-200 text-gray-500 font-bold text-xs peer-checked:bg-red-600 peer-checked:text-white peer-checked:border-red-700 transition-all">URGENTE</div>
-                  </label>
+                  <label class="cursor-pointer flex-1 text-center"><input type="radio" name="osPrioridade" value="verde" class="peer hidden" checked><div class="p-2 rounded-lg border border-gray-200 text-gray-500 font-bold text-xs peer-checked:bg-green-500 peer-checked:text-white transition-all">NORMAL</div></label>
+                  <label class="cursor-pointer flex-1 text-center"><input type="radio" name="osPrioridade" value="amarelo" class="peer hidden"><div class="p-2 rounded-lg border border-gray-200 text-gray-500 font-bold text-xs peer-checked:bg-yellow-500 peer-checked:text-white transition-all">ATENÇÃO</div></label>
+                  <label class="cursor-pointer flex-1 text-center"><input type="radio" name="osPrioridade" value="vermelho" class="peer hidden"><div class="p-2 rounded-lg border border-gray-200 text-gray-500 font-bold text-xs peer-checked:bg-red-600 peer-checked:text-white transition-all">URGENTE</div></label>
               </div>
           </div>
         </form>
@@ -229,9 +207,8 @@
   </div>
 
   <!-- MODAL: DETALHES (FICHA COMPLETA) -->
-  <div id="detailsModal" class="modal fixed inset-0 hidden items-center justify-center p-2 sm:p-6">
+  <div id="detailsModal" class="modal hidden">
     <div class="modal-content w-full max-w-7xl h-full overflow-hidden bg-slate-100">
-      
       <!-- Header do Modal -->
       <div class="bg-white border-b px-6 py-4 flex justify-between items-center flex-shrink-0">
         <div>
@@ -254,7 +231,6 @@
             
             <!-- COLUNA ESQUERDA (2/3): Informações, Mídia, Histórico -->
             <div class="lg:col-span-2 space-y-6">
-                
                 <!-- Card Principal -->
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 relative overflow-hidden">
                     <div class="absolute top-0 right-0 w-24 h-24 bg-blue-50 rounded-bl-full -mr-10 -mt-10"></div>
@@ -341,45 +317,48 @@
   </div>
 
   <!-- LIGHTBOX -->
-  <div id="lightbox" class="fixed inset-0 z-[200] hidden bg-black/95 backdrop-blur-xl flex-col items-center justify-center">
-      <div class="absolute top-4 right-4 flex gap-4">
-          <a id="lightbox-download" href="#" download class="text-white hover:text-blue-400 text-3xl"><i class='bx bxs-download'></i></a>
-          <button id="lightbox-close" class="text-white hover:text-red-500 text-4xl leading-none">&times;</button>
-      </div>
-      <div id="lightbox-content" class="w-full h-full flex items-center justify-center p-4"></div>
-      <div class="absolute bottom-10 left-0 right-0 flex justify-center gap-8">
-          <button id="lightbox-prev" class="p-4 bg-white/10 hover:bg-white/20 rounded-full text-white backdrop-blur"><i class='bx bx-chevron-left text-3xl'></i></button>
-          <button id="lightbox-next" class="p-4 bg-white/10 hover:bg-white/20 rounded-full text-white backdrop-blur"><i class='bx bx-chevron-right text-3xl'></i></button>
+  <div id="lightbox" class="modal hidden z-[200]">
+      <div class="fixed inset-0 bg-black/95 backdrop-blur-xl flex flex-col items-center justify-center">
+          <div class="absolute top-4 right-4 flex gap-4 z-50">
+              <a id="lightbox-download" href="#" download class="text-white hover:text-blue-400 text-3xl"><i class='bx bxs-download'></i></a>
+              <button id="lightbox-close" class="text-white hover:text-red-500 text-4xl leading-none">&times;</button>
+          </div>
+          <div id="lightbox-content" class="w-full h-full flex items-center justify-center p-4"></div>
+          <div class="absolute bottom-10 left-0 right-0 flex justify-center gap-8 z-50">
+              <button id="lightbox-prev" class="p-4 bg-white/10 hover:bg-white/20 rounded-full text-white backdrop-blur"><i class='bx bx-chevron-left text-3xl'></i></button>
+              <button id="lightbox-next" class="p-4 bg-white/10 hover:bg-white/20 rounded-full text-white backdrop-blur"><i class='bx bx-chevron-right text-3xl'></i></button>
+          </div>
       </div>
   </div>
 
   <!-- CONFIRM DELETE MODAL -->
-  <div id="confirmDeleteModal" class="modal fixed inset-0 hidden items-center justify-center p-4 z-[200]">
-      <div class="bg-white rounded-xl p-6 max-w-sm w-full shadow-2xl text-center">
+  <div id="confirmDeleteModal" class="modal hidden z-[200]">
+      <div class="modal-content w-full max-w-sm bg-white rounded-xl p-6 text-center shadow-2xl">
           <div class="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl"><i class='bx bx-error'></i></div>
           <h3 class="text-lg font-bold text-gray-800 mb-2">Tem certeza?</h3>
           <p id="confirmDeleteText" class="text-sm text-gray-500 mb-6"></p>
           <div class="grid grid-cols-2 gap-3">
               <button id="cancelDeleteBtn" class="btn bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 rounded-lg">Cancelar</button>
-              <button id="confirmDeleteBtn" class="btn bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg shadow-lg shadow-red-500/30">SIM, EXCLUIR</button>
+              <button id="confirmDeleteBtn" class="btn bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg shadow-lg">SIM, EXCLUIR</button>
           </div>
       </div>
   </div>
 
-  <!-- MODAL ADMIN E RELATÓRIOS (Placeholder para funcionalidade) -->
-  <div id="adminModal" class="modal fixed inset-0 z-[101] hidden items-center justify-center p-4">
-      <div class="bg-white p-8 rounded shadow-lg">
-          <h2 class="text-xl mb-4">Painel Administrativo</h2>
-          <p class="mb-4 text-gray-600">Funcionalidade em desenvolvimento.</p>
-          <button class="btn-close-modal bg-gray-200 px-4 py-2 rounded">Fechar</button>
+  <!-- MODAL ADMIN -->
+  <div id="adminModal" class="modal hidden z-[101]">
+      <div class="modal-content w-full max-w-md bg-white p-8 rounded shadow-lg">
+          <h2 class="text-xl mb-4 font-bold">Painel Administrativo</h2>
+          <p class="mb-4 text-gray-600">Funcionalidade completa em breve. Use para gerenciar usuários e cloud.</p>
+          <button class="btn-close-modal btn bg-gray-200 hover:bg-gray-300 text-gray-800 w-full py-2 rounded">Fechar</button>
       </div>
   </div>
   
-  <div id="reportsModal" class="modal fixed inset-0 z-[101] hidden items-center justify-center p-4">
-      <div class="bg-white p-8 rounded shadow-lg">
-           <h2 class="text-xl mb-4">Relatórios</h2>
-           <p class="mb-4 text-gray-600">Funcionalidade em desenvolvimento.</p>
-           <button class="btn-close-modal bg-gray-200 px-4 py-2 rounded">Fechar</button>
+  <!-- MODAL RELATÓRIOS -->
+  <div id="reportsModal" class="modal hidden z-[101]">
+      <div class="modal-content w-full max-w-md bg-white p-8 rounded shadow-lg">
+           <h2 class="text-xl mb-4 font-bold">Relatórios</h2>
+           <p class="mb-4 text-gray-600">Exportação de dados em lote em breve.</p>
+           <button class="btn-close-modal btn bg-gray-200 hover:bg-gray-300 text-gray-800 w-full py-2 rounded">Fechar</button>
       </div>
   </div>
 
