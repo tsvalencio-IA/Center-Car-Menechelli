@@ -24,13 +24,13 @@
       <div class="relative z-10">
           <h1 class="text-xl font-bold text-gray-600 mb-0">SISTEMA</h1>
           <h2 class="text-4xl font-black text-blue-900 mb-1 tracking-tighter">MENECHELLI</h2>
-          <p class="text-xs font-bold text-yellow-600 uppercase tracking-widest mb-8 border-b border-gray-100 pb-4">Gestão Inteligente v3.9</p>
+          <p class="text-xs font-bold text-yellow-600 uppercase tracking-widest mb-8 border-b border-gray-100 pb-4">Gestão Integrada v4.0</p>
           
           <form id="loginForm" class="text-left space-y-4">
             <div>
               <label class="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">Colaborador</label>
               <div class="relative">
-                <select id="userSelect" required class="appearance-none w-full p-3 bg-gray-50 border border-gray-200 rounded-xl font-bold text-gray-700 focus:ring-2 focus:ring-blue-500 outline-none">
+                <select id="userSelect" required class="appearance-none w-full p-3 bg-gray-50 border border-gray-200 rounded-xl font-bold text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
                   <option value="">Carregando equipe...</option>
                 </select>
                 <i class='bx bx-chevron-down absolute right-3 top-3.5 text-xl text-gray-400'></i>
@@ -57,7 +57,7 @@
     
     <!-- Header -->
     <header class="bg-white shadow-sm z-30 flex-shrink-0 relative">
-      <!-- Painel de Atenção (LEDs) -->
+      <!-- Painel de Atenção -->
       <div id="attention-panel-container" class="bg-slate-800 overflow-hidden transition-all duration-300 max-h-0">
         <div id="attention-panel" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-3 container mx-auto"></div>
       </div>
@@ -71,7 +71,7 @@
             </button>
             <div class="hidden sm:block leading-tight">
                 <h1 class="text-lg font-black text-blue-900 tracking-tight">MENECHELLI</h1>
-                <p class="text-[10px] font-bold text-gray-400 uppercase">Dashboard</p>
+                <p class="text-[10px] font-bold text-gray-400 uppercase">Center Car Dashboard</p>
             </div>
         </div>
         
@@ -344,22 +344,100 @@
       </div>
   </div>
 
-  <!-- MODAL ADMIN -->
+  <!-- MODAL ADMIN (COMPLETO) -->
   <div id="adminModal" class="modal hidden z-[101]">
-      <div class="modal-content w-full max-w-md bg-white p-8 rounded shadow-lg">
-          <h2 class="text-xl mb-4 font-bold">Painel Administrativo</h2>
-          <p class="mb-4 text-gray-600">Funcionalidade completa em breve. Use para gerenciar usuários e cloud.</p>
-          <button class="btn-close-modal btn bg-gray-200 hover:bg-gray-300 text-gray-800 w-full py-2 rounded">Fechar</button>
-      </div>
+    <div class="modal-content w-full max-w-3xl bg-white rounded-xl shadow-2xl h-[85vh] flex flex-col overflow-hidden">
+        <div class="modal-header bg-gray-50 border-b p-5 flex justify-between items-center">
+            <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2"><i class='bx bxs-cog text-blue-600'></i> Painel Administrativo</h2>
+            <button class="btn-close-modal text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+        </div>
+        
+        <!-- Abas -->
+        <div class="flex border-b border-gray-200 bg-white">
+            <button class="admin-tab active flex-1 py-4 text-blue-600 border-b-2 border-blue-600 font-bold bg-blue-50/30" data-target="tab-users">
+                <i class='bx bxs-group'></i> Gestão de Equipe
+            </button>
+            <button class="admin-tab flex-1 py-4 text-gray-500 hover:text-gray-700 font-medium" data-target="tab-cloudinary">
+                <i class='bx bxs-cloud'></i> Configuração Mídia
+            </button>
+        </div>
+
+        <div class="overflow-y-auto flex-grow p-6 bg-gray-50 modal-body">
+            
+            <!-- ABA USUÁRIOS -->
+            <div id="tab-users" class="admin-tab-content">
+                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm mb-6">
+                    <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2"><i class='bx bx-user-plus'></i> Cadastrar Novo Colaborador</h3>
+                    <form id="addUserForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="md:col-span-2">
+                            <input type="text" id="newUserName" placeholder="Nome Completo" required class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                        </div>
+                        <select id="newUserRole" class="p-3 border rounded-lg bg-white outline-none">
+                            <option value="Colaborador">Colaborador (Básico)</option>
+                            <option value="Mecânico">Mecânico</option>
+                            <option value="Atendente">Atendente (Recepção)</option>
+                            <option value="Gestor">Gestor (Acesso Total)</option>
+                        </select>
+                        <input type="text" id="newUserPass" placeholder="Senha de Acesso" required class="p-3 border rounded-lg outline-none">
+                        <div class="md:col-span-2">
+                            <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg shadow transition-colors">
+                                <i class='bx bx-check'></i> Salvar Usuário
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <h3 class="font-bold text-gray-600 text-sm uppercase tracking-wider mb-2 ml-1">Equipe Atual</h3>
+                <div id="usersList" class="space-y-2"></div>
+            </div>
+
+            <!-- ABA CLOUDINARY -->
+            <div id="tab-cloudinary" class="admin-tab-content hidden">
+                <div class="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500 mb-6">
+                    <p class="text-sm text-blue-800">Insira as chaves do Cloudinary para ativar uploads.</p>
+                </div>
+                <form id="cloudinaryForm" class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-4">
+                     <div>
+                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Cloud Name</label>
+                         <input id="cloudNameInput" type="text" class="w-full p-3 border rounded-lg bg-gray-50">
+                     </div>
+                     <div>
+                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Upload Preset</label>
+                         <input id="uploadPresetInput" type="text" class="w-full p-3 border rounded-lg bg-gray-50">
+                     </div>
+                     <button type="submit" class="w-full bg-blue-700 hover:bg-blue-800 text-white py-3 rounded-lg font-bold shadow">
+                        Salvar Configuração
+                     </button>
+                </form>
+            </div>
+        </div>
+    </div>
   </div>
   
-  <!-- MODAL RELATÓRIOS -->
+  <!-- MODAL RELATÓRIOS (COMPLETO) -->
   <div id="reportsModal" class="modal hidden z-[101]">
-      <div class="modal-content w-full max-w-md bg-white p-8 rounded shadow-lg">
-           <h2 class="text-xl mb-4 font-bold">Relatórios</h2>
-           <p class="mb-4 text-gray-600">Exportação de dados em lote em breve.</p>
-           <button class="btn-close-modal btn bg-gray-200 hover:bg-gray-300 text-gray-800 w-full py-2 rounded">Fechar</button>
-      </div>
+    <div class="modal-content w-full max-w-4xl bg-white rounded-xl shadow-xl h-[80vh] flex flex-col">
+        <div class="modal-header border-b p-5 flex justify-between items-center">
+            <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2"><i class='bx bxs-report'></i> Relatório de Entregas</h2>
+            <button class="btn-close-modal text-2xl text-gray-400 hover:text-gray-600">&times;</button>
+        </div>
+        <div class="p-6 flex-grow flex flex-col overflow-hidden">
+            <form id="reportsForm" class="flex flex-wrap items-end gap-4 bg-gray-50 p-4 rounded-lg mb-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Data Início</label>
+                    <input type="date" id="startDate" required class="p-2 border rounded w-full">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Data Fim</label>
+                    <input type="date" id="endDate" required class="p-2 border rounded w-full">
+                </div>
+                <button type="submit" class="btn bg-blue-600 hover:bg-blue-700 text-white px-6">Gerar Relatório</button>
+            </form>
+            <div id="reportsResultContainer" class="flex-grow overflow-y-auto border rounded-lg p-2 bg-white"></div>
+        </div>
+        <div class="modal-footer p-4 border-t bg-gray-50 flex justify-end">
+             <button id="exportReportBtn" class="hidden btn bg-green-600 hover:bg-green-700 text-white"><i class='bx bxs-file-export'></i> Imprimir Lista</button>
+        </div>
+    </div>
   </div>
 
   <!-- FIREBASE & LIBS -->
