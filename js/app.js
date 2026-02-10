@@ -1,5 +1,5 @@
 /* ==================================================================
-   DASHBOARD CENTER CAR MENECHELLI - V4.4 (BUSCA ENTREGUE)
+   DASHBOARD CENTER CAR MENECHELLI - V4.5 (PDF PROFISSIONAL)
    Desenvolvido por: thIAguinho Soluções
    ================================================================== */
 
@@ -268,12 +268,11 @@ document.addEventListener('DOMContentLoaded', () => {
       };
   };
 
-  // --- KANBAN (ATUALIZADO COM BUSCA EM ENTREGUE) ---
+  // --- KANBAN (COM BUSCA EM ENTREGUE) ---
   const initKanban = () => {
       const board = document.getElementById('kanbanBoard');
       if(!board) return;
       board.innerHTML = STATUS_LIST.map(status => {
-          // FEATURE: Input de busca específico para a coluna Entregue
           if (status === 'Entregue') {
               return `
                 <div class="status-column">
@@ -288,7 +287,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="vehicle-list" id="col-${status}"></div>
                 </div>`;
           }
-
           return `
             <div class="status-column">
                 <div class="column-header">
@@ -301,17 +299,13 @@ document.addEventListener('DOMContentLoaded', () => {
       }).join('');
   };
 
-  // FEATURE: Função de filtro para coluna Entregue
   window.filterEntregue = (term) => {
       const col = document.getElementById('col-Entregue');
       if(!col) return;
       const termUpper = term.toUpperCase();
       Array.from(col.children).forEach(card => {
-          if(card.innerText.toUpperCase().includes(termUpper)) {
-              card.classList.remove('hidden');
-          } else {
-              card.classList.add('hidden');
-          }
+          if(card.innerText.toUpperCase().includes(termUpper)) card.classList.remove('hidden');
+          else card.classList.add('hidden');
       });
   };
 
@@ -336,15 +330,11 @@ document.addEventListener('DOMContentLoaded', () => {
               if(col) count.innerText = col.children.length;
           });
           
-          // FEATURE: Re-aplica filtro de entregue se houver busca ativa após atualização do banco
           const searchInput = document.getElementById('search-entregue-input');
-          if (searchInput && searchInput.value) {
-              window.filterEntregue(searchInput.value);
-          }
+          if (searchInput && searchInput.value) window.filterEntregue(searchInput.value);
 
           updateAlerts();
           
-          // Refresh modal se aberto
           const modal = document.getElementById('detailsModal');
           const logId = document.getElementById('logOsId').value;
           if(modal && !modal.classList.contains('hidden') && logId && allServiceOrders[logId]) {
@@ -439,16 +429,10 @@ document.addEventListener('DOMContentLoaded', () => {
               
               confirmBtn.onclick = async () => {
                   await db.ref(`serviceOrders/${id}`).remove();
-                  
-                  // Força fechamento dos dois modais
                   const modalConfirm = document.getElementById('confirmDeleteModal');
-                  modalConfirm.classList.add('hidden');
-                  modalConfirm.classList.remove('flex');
-
+                  modalConfirm.classList.add('hidden'); modalConfirm.classList.remove('flex');
                   const modalDetails = document.getElementById('detailsModal');
-                  modalDetails.classList.add('hidden');
-                  modalDetails.classList.remove('flex');
-                  
+                  modalDetails.classList.add('hidden'); modalDetails.classList.remove('flex');
                   showNotification('Excluído com sucesso.');
               };
               
@@ -559,33 +543,209 @@ document.addEventListener('DOMContentLoaded', () => {
       db.ref(`serviceOrders/${id}/logs`).push({ user: currentUser.name, timestamp: new Date().toISOString(), description: `EDITADO: ${field} (${oldV} -> ${newV})`, type: 'log' });
   };
 
-  // --- IMPRESSÃO (CORRIGIDO TAMANHO IMAGENS) ---
+  // --- IMPRESSÃO PROFISSIONAL (ESTILO CHEVRON) ---
   const printOS = (os) => {
+      // 1. Preparar Logs e Calcular Totais
+      let totalGeral = 0;
       const logs = os.logs ? Object.values(os.logs).sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp)) : [];
-      const lines = logs.map(l => `<tr><td>${new Date(l.timestamp).toLocaleString('pt-BR')}</td><td>${l.user}</td><td>${l.description}</td><td>${l.parts||'-'}</td><td class="text-right">${l.value?`R$ ${l.value}`:'-'}</td></tr>`).join('');
-      // BUG FIX PDF: Classes photo-grid e photo-box adicionadas para controle
-      const imgs = os.media ? Object.values(os.media).filter(m => m.type && m.type.includes('image')).slice(0,6).map(m => `<div class="photo-box"><img src="${m.url}"></div>`).join('') : '';
       
-      const html = `<html><head><title>${os.placa}</title><style>
-            body{font-family:sans-serif;font-size:12px;padding:20px}
-            .header{text-align:center;border-bottom:2px solid blue;margin-bottom:20px}
-            table{width:100%;border-collapse:collapse;margin-bottom:20px}
-            th,td{border-bottom:1px solid #ddd;padding:5px;text-align:left}
-            .text-right{text-align:right}
-            /* GRID DE MINIATURAS */
-            .photos-container { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
-            .photo-box { width: 100px; height: 100px; border: 1px solid #ccc; overflow: hidden; display: flex; align-items: center; justify-content: center; }
-            .photo-box img { width: 100%; height: 100%; object-fit: cover; }
-      </style></head><body>
-      <div class="header"><h1>${os.placa} - ${os.modelo}</h1><p>Cliente: ${os.cliente}</p></div>
-      <h3>Histórico</h3>
-      <table><thead><tr><th>Data</th><th>Resp.</th><th>Desc.</th><th>Peças</th><th>Valor</th></tr></thead><tbody>${lines}</tbody></table>
-      <h3>Evidências</h3>
-      <div class="photos-container">${imgs}</div>
-      <script>window.print()</script></body></html>`;
+      const lines = logs.map(l => {
+          let valDisplay = '-';
+          if(l.value) {
+              const valNum = parseFloat(l.value);
+              if(!isNaN(valNum)) {
+                  totalGeral += valNum;
+                  valDisplay = `R$ ${valNum.toFixed(2)}`;
+              } else {
+                  valDisplay = `R$ ${l.value}`; // Fallback se não for numero limpo
+              }
+          }
+          return `
+          <tr class="item-row">
+              <td>${new Date(l.timestamp).toLocaleString('pt-BR')}</td>
+              <td>${l.user.split(' ')[0]}</td>
+              <td>${l.description}</td>
+              <td>${l.parts || '-'}</td>
+              <td class="text-right font-bold">${valDisplay}</td>
+          </tr>`;
+      }).join('');
+
+      // 2. Preparar Fotos
+      const imgs = os.media ? Object.values(os.media).filter(m => m.type && m.type.includes('image')).slice(0,8).map(m => `
+          <div class="photo-card">
+              <img src="${m.url}" alt="Evidência">
+          </div>
+      `).join('') : '<p style="padding:20px; color:#999; font-style:italic;">Nenhuma evidência fotográfica anexada.</p>';
+
+      // 3. Montar HTML Completo
+      const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+          <title>OS - ${os.placa}</title>
+          <meta charset="UTF-8">
+          <style>
+              @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap');
+              @page { size: A4; margin: 10mm; }
+              body { font-family: 'Roboto', sans-serif; font-size: 11px; color: #333; line-height: 1.3; -webkit-print-color-adjust: exact; }
+              
+              /* HEADER */
+              .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #1e3a8a; padding-bottom: 10px; margin-bottom: 20px; }
+              .header-logo h1 { font-size: 24px; font-weight: 900; color: #1e3a8a; margin: 0; text-transform: uppercase; letter-spacing: -1px; }
+              .header-logo p { margin: 0; font-size: 10px; color: #666; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; }
+              .header-info { text-align: right; }
+              .os-title { font-size: 18px; font-weight: 900; color: #333; text-transform: uppercase; border: 2px solid #333; padding: 5px 15px; display: inline-block; border-radius: 4px; }
+
+              /* INFO GRID */
+              .section-title { font-size: 12px; font-weight: 700; color: #1e3a8a; text-transform: uppercase; margin-bottom: 5px; border-bottom: 1px solid #ddd; padding-bottom: 2px; margin-top: 15px; }
+              .info-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px; }
+              .info-box { background: #f8fafc; border: 1px solid #e2e8f0; padding: 8px; border-radius: 4px; }
+              .info-label { display: block; font-size: 9px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; }
+              .info-value { font-size: 12px; font-weight: 600; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+              /* OBSERVAÇÕES */
+              .obs-box { background: #fffbeb; border: 1px solid #fcd34d; padding: 10px; border-radius: 4px; color: #78350f; font-size: 11px; min-height: 40px; margin-bottom: 15px; }
+
+              /* TABELA */
+              table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 10px; }
+              th { background: #1e3a8a; color: white; text-align: left; padding: 8px; font-weight: 700; text-transform: uppercase; }
+              td { border-bottom: 1px solid #e2e8f0; padding: 8px; color: #334155; vertical-align: top; }
+              .item-row:nth-child(even) { background-color: #f8fafc; }
+              .text-right { text-align: right; }
+              .font-bold { font-weight: bold; }
+
+              /* TOTAL */
+              .total-container { display: flex; justify-content: flex-end; margin-top: -10px; margin-bottom: 30px; }
+              .total-box { background: #1e3a8a; color: white; padding: 10px 20px; border-radius: 4px; font-size: 14px; font-weight: bold; }
+
+              /* FOTOS */
+              .photos-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px; }
+              .photo-card { border: 1px solid #ddd; padding: 3px; background: white; border-radius: 4px; height: 120px; }
+              .photo-card img { width: 100%; height: 100%; object-fit: cover; border-radius: 2px; }
+
+              /* FOOTER / ASSINATURA */
+              .footer-section { margin-top: 40px; page-break-inside: avoid; }
+              .signatures { display: flex; justify-content: space-between; margin-top: 50px; gap: 40px; }
+              .sign-line { flex: 1; border-top: 1px solid #333; text-align: center; padding-top: 5px; font-size: 10px; font-weight: bold; text-transform: uppercase; }
+              .system-footer { margin-top: 30px; border-top: 1px solid #eee; padding-top: 10px; text-align: center; font-size: 8px; color: #999; }
+          </style>
+      </head>
+      <body>
+          
+          <!-- HEADER -->
+          <div class="header">
+              <div class="header-logo">
+                  <h1>MENECHELLI</h1>
+                  <p>Center Car Automotive</p>
+              </div>
+              <div class="header-info">
+                  <div class="os-title">Ordem de Serviço</div>
+                  <div style="font-size:10px; margin-top:5px; color:#666;">Emitido em: ${new Date().toLocaleString('pt-BR')}</div>
+              </div>
+          </div>
+
+          <!-- DETALHES GERAIS (GRID) -->
+          <div class="section-title">Detalhes do Veículo e Cliente</div>
+          <div class="info-grid">
+              <div class="info-box">
+                  <span class="info-label">Placa</span>
+                  <div class="info-value" style="font-size:16px;">${os.placa}</div>
+              </div>
+              <div class="info-box">
+                  <span class="info-label">Modelo</span>
+                  <div class="info-value">${os.modelo}</div>
+              </div>
+              <div class="info-box">
+                  <span class="info-label">Cliente</span>
+                  <div class="info-value">${os.cliente}</div>
+              </div>
+              <div class="info-box">
+                  <span class="info-label">Telefone</span>
+                  <div class="info-value">${os.telefone || '-'}</div>
+              </div>
+              <div class="info-box">
+                  <span class="info-label">KM Atual</span>
+                  <div class="info-value">${os.km || '-'}</div>
+              </div>
+              <div class="info-box">
+                  <span class="info-label">Entrada</span>
+                  <div class="info-value">${new Date(os.createdAt).toLocaleDateString()}</div>
+              </div>
+              <div class="info-box">
+                  <span class="info-label">Responsável</span>
+                  <div class="info-value">${os.responsible || '-'}</div>
+              </div>
+              <div class="info-box">
+                  <span class="info-label">Status Final</span>
+                  <div class="info-value" style="color:#1e3a8a;">${os.status.replace(/-/g,' ')}</div>
+              </div>
+          </div>
+
+          <!-- QUEIXA -->
+          <div class="section-title">Queixa / Solicitação Inicial</div>
+          <div class="obs-box">
+              <strong>RELATO DO CLIENTE:</strong><br>
+              ${os.observacoes || 'Nenhuma observação registrada.'}
+          </div>
+
+          <!-- HISTÓRICO -->
+          <div class="section-title">Histórico de Serviços e Peças</div>
+          <table>
+              <thead>
+                  <tr>
+                      <th width="15%">Data/Hora</th>
+                      <th width="15%">Técnico</th>
+                      <th width="35%">Descrição do Serviço</th>
+                      <th width="20%">Peças Aplicadas</th>
+                      <th width="15%" class="text-right">Valor</th>
+                  </tr>
+              </thead>
+              <tbody>
+                  ${lines}
+              </tbody>
+          </table>
+
+          <!-- TOTAL -->
+          <div class="total-container">
+              <div class="total-box">
+                  TOTAL GERAL: R$ ${totalGeral.toFixed(2)}
+              </div>
+          </div>
+
+          <!-- FOTOS -->
+          <div class="footer-section">
+              <div class="section-title">Evidências Digitais (Fotos Anexadas)</div>
+              <div class="photos-container">
+                  ${imgs}
+              </div>
+          </div>
+
+          <!-- ASSINATURAS -->
+          <div class="footer-section">
+              <div class="signatures">
+                  <div class="sign-line">
+                      Center Car Menechelli<br>
+                      <span style="font-weight:normal; font-size:9px;">Responsável Técnico</span>
+                  </div>
+                  <div class="sign-line">
+                      ${os.cliente}<br>
+                      <span style="font-weight:normal; font-size:9px;">Assinatura do Cliente</span>
+                  </div>
+              </div>
+          </div>
+
+          <!-- RODAPÉ SISTEMA -->
+          <div class="system-footer">
+              Sistema de Gestão Center Car Menechelli v4.5 &bull; Desenvolvido por thIAguinho Soluções &bull; ${os.id}
+          </div>
+
+          <script>window.print()</script>
+      </body>
+      </html>`;
       
-      const win = window.open('', '', 'width=900,height=800');
-      win.document.write(html); win.document.close();
+      const win = window.open('', '', 'width=900,height=900');
+      win.document.write(html);
+      win.document.close();
   };
 
   const renderTimeline = (os) => {
@@ -627,7 +787,7 @@ document.addEventListener('DOMContentLoaded', () => {
       lb.classList.remove('hidden'); lb.classList.add('flex');
   };
 
-  // --- BOTÕES MODAIS (CORREÇÃO AQUI) ---
+  // --- BOTÕES MODAIS ---
   document.querySelectorAll('.btn-close-modal').forEach(b => b.onclick = (e) => {
       // Fecha modal padrão
       e.target.closest('.modal').classList.add('hidden'); 
