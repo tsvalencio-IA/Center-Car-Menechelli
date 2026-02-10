@@ -1,5 +1,5 @@
 /* ==================================================================
-   DASHBOARD CENTER CAR MENECHELLI - V4.0 (FINAL GOLDEN VERSION)
+   DASHBOARD CENTER CAR MENECHELLI - V4.1 (ULTIMATE)
    Desenvolvido por: thIAguinho Soluções
    ================================================================== */
 
@@ -17,6 +17,7 @@ const firebaseConfig = {
 let activeCloudinaryConfig = null;
 let currentUser = null;
 let allServiceOrders = {};
+let allUsers = [];
 let lightboxMedia = [];
 let currentLightboxIndex = 0;
 let filesToUpload = [];
@@ -66,15 +67,19 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = snap.val();
       const select = document.getElementById('userSelect');
       if(!select) return;
+      
+      allUsers = [];
       select.innerHTML = '<option value="">Selecione...</option>';
       if (data) {
           Object.entries(data).forEach(([key, user]) => {
+              allUsers.push({...user, id: key});
               const opt = document.createElement('option');
               opt.value = JSON.stringify({id: key, name: user.name, role: user.role || 'Colaborador', password: user.password});
               opt.textContent = user.name;
               select.appendChild(opt);
           });
       }
+      renderAdminUserList();
       if (!currentUser) checkSession();
   });
 
@@ -86,10 +91,8 @@ document.addEventListener('DOMContentLoaded', () => {
           const session = JSON.parse(stored);
           const now = new Date();
           const cutoff = new Date();
-          cutoff.setHours(19, 0, 0, 0); // 19:00 de hoje
+          cutoff.setHours(19, 0, 0, 0); 
           
-          // Se for antes das 19h, o cutoff é hoje 19h. Se for depois, já era pra ter deslogado se o login foi antes.
-          // Lógica simples: Se login foi feito antes do ultimo cutoff passado e agora é depois dele -> logout.
           if (now > cutoff && new Date(session.loginTime) < cutoff) {
               localStorage.removeItem(SESSION_KEY);
               showNotification("Sessão expirada (fechamento diário).", "error");
@@ -109,7 +112,6 @@ document.addEventListener('DOMContentLoaded', () => {
       
       const isManager = user.role === 'Gestor' || (user.name && user.name.includes('Thiago'));
       
-      // Controle Híbrido de Visibilidade Gestor
       const desktopActions = document.getElementById('desktopAdminActions');
       const mobileAdmin = document.getElementById('adminBtnMobile');
       const mobileReports = document.getElementById('reportsBtnMobile');
@@ -151,7 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('logoutButton').onclick = () => { localStorage.removeItem(SESSION_KEY); location.reload(); };
 
-  // --- MENU USUÁRIO ---
+  // --- MENU USUÁRIO & ADMIN TABS ---
   const userMenuBtn = document.getElementById('userMenuBtn');
   const userDropdown = document.getElementById('userDropdown');
   if(userMenuBtn) userMenuBtn.onclick = (e) => { e.stopPropagation(); userDropdown.classList.toggle('hidden'); };
@@ -176,6 +178,95 @@ document.addEventListener('DOMContentLoaded', () => {
   const reportsBtnMobile = document.getElementById('reportsBtnMobile');
   if(reportsBtn) reportsBtn.onclick = () => toggleModal('reportsModal');
   if(reportsBtnMobile) reportsBtnMobile.onclick = () => toggleModal('reportsModal');
+
+  // ABAS DO ADMIN
+  document.querySelectorAll('.admin-tab').forEach(tab => {
+      tab.onclick = () => {
+          document.querySelectorAll('.admin-tab').forEach(t => {
+              t.classList.remove('active', 'border-blue-600', 'text-blue-600', 'bg-blue-50/30');
+              t.classList.add('text-gray-500');
+          });
+          tab.classList.add('active', 'border-blue-600', 'text-blue-600', 'bg-blue-50/30');
+          tab.classList.remove('text-gray-500');
+          document.querySelectorAll('.admin-tab-content').forEach(c => c.classList.add('hidden'));
+          document.getElementById(tab.dataset.target).classList.remove('hidden');
+      };
+  });
+
+  // --- LÓGICA ADMIN (USUÁRIOS E CLOUD) ---
+  const renderAdminUserList = () => {
+      const list = document.getElementById('usersList');
+      if(!list) return;
+      list.innerHTML = allUsers.map(u => `
+          <div class="flex justify-between items-center bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
+              <div><p class="font-bold text-gray-800 text-sm">${u.name}</p><p class="text-xs text-gray-500">${u.role} | Senha: ${u.password}</p></div>
+              ${u.name.includes('Thiago') ? '<span class="text-xs font-bold text-blue-600">MASTER</span>' : `<button onclick="window.removeUser('${u.id}')" class="text-red-500 p-2"><i class='bx bxs-trash'></i></button>`}
+          </div>
+      `).join('');
+  };
+
+  window.removeUser = (id) => { if(confirm('Remover usuário?')) db.ref(`users/${id}`).remove(); };
+
+  document.getElementById('addUserForm').onsubmit = (e) => {
+      e.preventDefault();
+      db.ref('users').push({
+          name: document.getElementById('newUserName').value,
+          role: document.getElementById('newUserRole').value,
+          password: document.getElementById('newUserPass').value
+      });
+      e.target.reset(); showNotification('Usuário Adicionado!');
+  };
+
+  document.getElementById('cloudinaryForm').onsubmit = (e) => {
+      e.preventDefault();
+      db.ref('cloudinaryConfigs').push({
+          cloudName: document.getElementById('cloudNameInput').value,
+          uploadPreset: document.getElementById('uploadPresetInput').value,
+          updatedBy: currentUser.name,
+          timestamp: new Date().toISOString()
+      });
+      showNotification('Configuração Cloudinary Salva!');
+  };
+
+  // --- LÓGICA RELATÓRIOS ---
+  document.getElementById('reportsForm').onsubmit = (e) => {
+      e.preventDefault();
+      const start = new Date(document.getElementById('startDate').value);
+      const end = new Date(document.getElementById('endDate').value);
+      end.setHours(23, 59, 59);
+
+      const filtered = Object.values(allServiceOrders).filter(os => {
+          if(os.status !== 'Entregue') return false;
+          const date = new Date(os.lastUpdate || os.createdAt);
+          return date >= start && date <= end;
+      });
+
+      const container = document.getElementById('reportsResultContainer');
+      const exportBtn = document.getElementById('exportReportBtn');
+      
+      if(filtered.length === 0) {
+          container.innerHTML = '<p class="text-center text-gray-500 py-4">Nenhum veículo entregue no período.</p>';
+          exportBtn.classList.add('hidden');
+          return;
+      }
+
+      let total = 0;
+      const html = `<table class="w-full text-sm text-left"><thead class="bg-gray-100"><tr><th class="p-2">Data</th><th class="p-2">Placa</th><th class="p-2">Cliente</th></tr></thead><tbody>
+          ${filtered.map(os => {
+              total++;
+              return `<tr class="border-b"><td class="p-2">${new Date(os.lastUpdate).toLocaleDateString()}</td><td class="p-2 font-bold">${os.placa}</td><td class="p-2">${os.cliente}</td></tr>`;
+          }).join('')}
+      </tbody></table><div class="mt-4 font-bold text-right">Total: ${total} Veículos</div>`;
+      
+      container.innerHTML = html;
+      exportBtn.classList.remove('hidden');
+      
+      exportBtn.onclick = () => {
+          const win = window.open('', '', 'width=800,height=600');
+          win.document.write(`<html><head><title>Relatório</title><style>body{font-family:sans-serif;padding:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:8px;text-align:left}th{background:#f2f2f2}</style></head><body><h2>Relatório de Entregas</h2><p>Período: ${start.toLocaleDateString()} a ${end.toLocaleDateString()}</p>${html}<script>window.print()</script></body></html>`);
+          win.document.close();
+      };
+  };
 
   // --- KANBAN ---
   const initKanban = () => {
