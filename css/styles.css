@@ -3,30 +3,46 @@ body {
   font-family: 'Roboto', sans-serif; 
   background-color: #f1f5f9; /* Slate-100 */
   overflow-x: hidden; /* Evita rolagem horizontal na página inteira */
+  height: 100vh; /* Fallback */
+  height: 100dvh; /* Altura real do viewport mobile */
 }
 
 /* =============== KANBAN BOARD (GRID SYSTEM) =============== */
-/* Correção: Usamos Grid para forçar larguras iguais e responsividade, removendo o scroll horizontal estranho */
 #kanbanBoard {
   display: grid;
   grid-template-columns: repeat(1, 1fr); /* Mobile: 1 coluna */
   gap: 1rem;
-  padding-bottom: 2rem;
+  padding-bottom: 4rem; /* Espaço extra no final */
+  width: 100%;
 }
 
-@media (min-width: 640px) { #kanbanBoard { grid-template-columns: repeat(2, 1fr); } } /* Tablet: 2 colunas */
-@media (min-width: 1024px) { #kanbanBoard { grid-template-columns: repeat(4, 1fr); } } /* Laptop: 4 colunas */
-@media (min-width: 1280px) { #kanbanBoard { grid-template-columns: repeat(8, 1fr); } } /* Desktop Wide: 8 colunas */
+/* Assinatura no rodapé do Kanban */
+#kanbanBoard::after {
+  content: "Tecnologia: thIAguinho Soluções Automotivas";
+  grid-column: 1 / -1;
+  text-align: center;
+  font-size: 0.75rem;
+  color: #94a3b8;
+  padding: 2rem 0;
+  font-weight: bold;
+  opacity: 0.6;
+}
+
+@media (min-width: 640px) { #kanbanBoard { grid-template-columns: repeat(2, 1fr); } } 
+@media (min-width: 1024px) { #kanbanBoard { grid-template-columns: repeat(4, 1fr); } } 
+@media (min-width: 1280px) { #kanbanBoard { grid-template-columns: repeat(8, 1fr); } }
 
 .status-column { 
-  background: #e2e8f0; /* Slate-200 */
+  background: #e2e8f0; 
   border-radius: 0.75rem; 
   display: flex; 
   flex-direction: column; 
   min-height: 150px;
-  max-height: calc(100vh - 140px); /* Altura fixa para permitir scroll interno */
+  /* Altura ajustada para mobile (dvh) para garantir que a barra de rolagem apareça corretamente */
+  max-height: calc(100dvh - 160px); 
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   border: 1px solid #cbd5e1;
+  position: relative;
 }
 
 .column-header {
@@ -49,17 +65,32 @@ body {
 
 .vehicle-list { 
   flex-grow: 1; 
-  overflow-y: auto; /* Scroll apenas DENTRO da coluna */
+  overflow-y: auto; /* Scroll dentro da coluna */
   padding: 0.5rem;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  /* Garante que o touch funcione bem para scroll */
+  -webkit-overflow-scrolling: touch; 
+  padding-right: 2px; /* Espaço para não colar na barra */
 }
 
-/* Custom Scrollbar para as listas */
-.vehicle-list::-webkit-scrollbar { width: 4px; }
-.vehicle-list::-webkit-scrollbar-track { background: transparent; }
-.vehicle-list::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+/* Custom Scrollbar - Mais larga para facilitar o toque */
+.vehicle-list::-webkit-scrollbar { 
+  width: 10px; /* Aumentado de 4px para 10px */
+}
+.vehicle-list::-webkit-scrollbar-track { 
+  background: rgba(0,0,0,0.05);
+  border-radius: 4px;
+}
+.vehicle-list::-webkit-scrollbar-thumb { 
+  background: #94a3b8; 
+  border-radius: 10px;
+  border: 2px solid #e2e8f0; /* Borda para separar visualmente */
+}
+.vehicle-list::-webkit-scrollbar-thumb:hover { 
+  background: #64748b; 
+}
 
 /* =============== CARDS DE VEÍCULOS =============== */
 .vehicle-card {
@@ -68,9 +99,11 @@ body {
   padding: 0.75rem; 
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
   transition: all 0.2s ease-in-out; 
-  border-left: 4px solid #94a3b8; /* Cor padrão */
+  border-left: 4px solid #94a3b8; 
   cursor: pointer;
   position: relative;
+  /* Melhoria visual card mobile */
+  touch-action: manipulation;
 }
 
 .vehicle-card:hover { 
@@ -79,7 +112,7 @@ body {
   z-index: 20;
 }
 
-/* Cores específicas por status (Padrão Visual Forte) */
+/* Cores específicas por status */
 .vehicle-card.status-Aguardando-Mecanico { border-left-color: #f59e0b; background: #fffbeb; }
 .vehicle-card.status-Em-Analise { border-left-color: #8b5cf6; }
 .vehicle-card.status-Orcamento-Enviado { border-left-color: #06b6d4; }
@@ -101,9 +134,11 @@ body {
 
 /* =============== MODAIS =============== */
 .modal { 
-  background: rgba(15, 23, 42, 0.7); /* Backdrop escuro moderno */
-  backdrop-filter: blur(4px); 
-  z-index: 50;
+  background: rgba(15, 23, 42, 0.85); /* Fundo um pouco mais escuro */
+  backdrop-filter: blur(5px); 
+  z-index: 9999; /* Z-index altíssimo para sobrepor tudo */
+  position: fixed; /* Garantia de posição */
+  inset: 0;
 }
 
 .modal-content { 
@@ -114,6 +149,21 @@ body {
   max-height: 95vh;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   animation: modal-pop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+/* Assinatura no Modal */
+.modal-content::after {
+  content: "thIAguinho System";
+  display: block;
+  text-align: center;
+  font-size: 0.6rem;
+  color: #cbd5e1;
+  padding: 5px;
+  position: absolute;
+  bottom: 2px;
+  width: 100%;
+  pointer-events: none;
 }
 
 @keyframes modal-pop { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
@@ -135,7 +185,7 @@ body {
 
 /* =============== NOTIFICAÇÃO TOAST =============== */
 .notification {
-  position: fixed; top: 1rem; right: 1rem; z-index: 100;
+  position: fixed; top: 1rem; right: 1rem; z-index: 10000;
   background: #1e293b; color: white;
   padding: 1rem 1.5rem; border-radius: 0.5rem;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
@@ -152,5 +202,25 @@ body {
   transition: all 0.2s; 
   font-weight: 600; 
   display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+  cursor: pointer;
 }
 .btn:active { transform: scale(0.95); }
+
+/* =============== AJUSTES MOBILE (Cabeçalho) =============== */
+/* Força a visibilidade de elementos críticos no mobile caso estejam ocultos */
+@media (max-width: 640px) {
+  /* Garante que o header tenha altura suficiente */
+  header {
+    min-height: 60px;
+    padding-bottom: 10px;
+  }
+  
+  /* Ajuste para o botão Nova OS aparecer melhor */
+  #addOSBtn {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+  
+  /* Se o texto estiver oculto por classe tailwind 'hidden sm:inline', isso não sobrescreve HTML, 
+     mas garante layout flexível */
+}
