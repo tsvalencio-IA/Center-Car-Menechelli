@@ -1,5 +1,5 @@
 /* ==================================================================
-   DASHBOARD CENTER CAR MENECHELLI - V4.1 (ULTIMATE)
+   DASHBOARD CENTER CAR MENECHELLI - V4.4 (BUSCA ENTREGUE)
    Desenvolvido por: thIAguinho Soluções
    ================================================================== */
 
@@ -268,19 +268,51 @@ document.addEventListener('DOMContentLoaded', () => {
       };
   };
 
-  // --- KANBAN ---
+  // --- KANBAN (ATUALIZADO COM BUSCA EM ENTREGUE) ---
   const initKanban = () => {
       const board = document.getElementById('kanbanBoard');
       if(!board) return;
-      board.innerHTML = STATUS_LIST.map(status => `
-        <div class="status-column">
-            <div class="column-header">
-                <span>${status.replace(/-/g, ' ')}</span>
-                <span class="bg-white/50 px-2 py-0.5 rounded text-[10px] border border-slate-300" id="count-${status}">0</span>
+      board.innerHTML = STATUS_LIST.map(status => {
+          // FEATURE: Input de busca específico para a coluna Entregue
+          if (status === 'Entregue') {
+              return `
+                <div class="status-column">
+                    <div class="column-header" style="display:block;">
+                        <div class="flex justify-between items-center mb-1">
+                            <span>${status.replace(/-/g, ' ')}</span>
+                            <span class="bg-white/50 px-2 py-0.5 rounded text-[10px] border border-slate-300" id="count-${status}">0</span>
+                        </div>
+                        <input type="text" id="search-entregue-input" placeholder="Buscar Placa..." onkeyup="window.filterEntregue(this.value)" 
+                               class="w-full p-1.5 text-[11px] rounded border border-slate-300 text-slate-700 bg-white/80 focus:bg-white outline-none focus:ring-1 focus:ring-blue-500 uppercase font-bold placeholder:font-normal placeholder:text-slate-400">
+                    </div>
+                    <div class="vehicle-list" id="col-${status}"></div>
+                </div>`;
+          }
+
+          return `
+            <div class="status-column">
+                <div class="column-header">
+                    <span>${status.replace(/-/g, ' ')}</span>
+                    <span class="bg-white/50 px-2 py-0.5 rounded text-[10px] border border-slate-300" id="count-${status}">0</span>
+                </div>
+                <div class="vehicle-list" id="col-${status}"></div>
             </div>
-            <div class="vehicle-list" id="col-${status}"></div>
-        </div>
-      `).join('');
+          `;
+      }).join('');
+  };
+
+  // FEATURE: Função de filtro para coluna Entregue
+  window.filterEntregue = (term) => {
+      const col = document.getElementById('col-Entregue');
+      if(!col) return;
+      const termUpper = term.toUpperCase();
+      Array.from(col.children).forEach(card => {
+          if(card.innerText.toUpperCase().includes(termUpper)) {
+              card.classList.remove('hidden');
+          } else {
+              card.classList.add('hidden');
+          }
+      });
   };
 
   const listenOS = () => {
@@ -303,7 +335,15 @@ document.addEventListener('DOMContentLoaded', () => {
               const count = document.getElementById(`count-${s}`);
               if(col) count.innerText = col.children.length;
           });
+          
+          // FEATURE: Re-aplica filtro de entregue se houver busca ativa após atualização do banco
+          const searchInput = document.getElementById('search-entregue-input');
+          if (searchInput && searchInput.value) {
+              window.filterEntregue(searchInput.value);
+          }
+
           updateAlerts();
+          
           // Refresh modal se aberto
           const modal = document.getElementById('detailsModal');
           const logId = document.getElementById('logOsId').value;
@@ -396,13 +436,22 @@ document.addEventListener('DOMContentLoaded', () => {
           delBtn.onclick = () => {
               document.getElementById('confirmDeleteText').innerHTML = `Apagar <strong>${os.placa}</strong>?`;
               const confirmBtn = document.getElementById('confirmDeleteBtn');
+              
               confirmBtn.onclick = async () => {
                   await db.ref(`serviceOrders/${id}`).remove();
-                  document.getElementById('confirmDeleteModal').classList.add('hidden');
-                  document.getElementById('detailsModal').classList.add('hidden');
-                  document.getElementById('detailsModal').classList.remove('flex');
-                  showNotification('Excluído.');
+                  
+                  // Força fechamento dos dois modais
+                  const modalConfirm = document.getElementById('confirmDeleteModal');
+                  modalConfirm.classList.add('hidden');
+                  modalConfirm.classList.remove('flex');
+
+                  const modalDetails = document.getElementById('detailsModal');
+                  modalDetails.classList.add('hidden');
+                  modalDetails.classList.remove('flex');
+                  
+                  showNotification('Excluído com sucesso.');
               };
+              
               const modal = document.getElementById('confirmDeleteModal');
               modal.classList.remove('hidden'); modal.classList.add('flex');
           };
@@ -510,12 +559,31 @@ document.addEventListener('DOMContentLoaded', () => {
       db.ref(`serviceOrders/${id}/logs`).push({ user: currentUser.name, timestamp: new Date().toISOString(), description: `EDITADO: ${field} (${oldV} -> ${newV})`, type: 'log' });
   };
 
-  // --- IMPRESSÃO & TIMELINE ---
+  // --- IMPRESSÃO (CORRIGIDO TAMANHO IMAGENS) ---
   const printOS = (os) => {
       const logs = os.logs ? Object.values(os.logs).sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp)) : [];
       const lines = logs.map(l => `<tr><td>${new Date(l.timestamp).toLocaleString('pt-BR')}</td><td>${l.user}</td><td>${l.description}</td><td>${l.parts||'-'}</td><td class="text-right">${l.value?`R$ ${l.value}`:'-'}</td></tr>`).join('');
+      // BUG FIX PDF: Classes photo-grid e photo-box adicionadas para controle
       const imgs = os.media ? Object.values(os.media).filter(m => m.type && m.type.includes('image')).slice(0,6).map(m => `<div class="photo-box"><img src="${m.url}"></div>`).join('') : '';
-      const html = `<html><head><title>${os.placa}</title><style>body{font-family:sans-serif;font-size:12px;padding:20px}.header{text-align:center;border-bottom:2px solid blue;margin-bottom:20px}table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid #ddd;padding:5px;text-align:left}.text-right{text-align:right}.photos-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:20px}.photo-box img{width:100%;height:150px;object-fit:cover}</style></head><body><div class="header"><h1>${os.placa} - ${os.modelo}</h1><p>Cliente: ${os.cliente}</p></div><h3>Histórico</h3><table><thead><tr><th>Data</th><th>Resp.</th><th>Desc.</th><th>Peças</th><th>Valor</th></tr></thead><tbody>${lines}</tbody></table>${imgs}<script>window.print()</script></body></html>`;
+      
+      const html = `<html><head><title>${os.placa}</title><style>
+            body{font-family:sans-serif;font-size:12px;padding:20px}
+            .header{text-align:center;border-bottom:2px solid blue;margin-bottom:20px}
+            table{width:100%;border-collapse:collapse;margin-bottom:20px}
+            th,td{border-bottom:1px solid #ddd;padding:5px;text-align:left}
+            .text-right{text-align:right}
+            /* GRID DE MINIATURAS */
+            .photos-container { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+            .photo-box { width: 100px; height: 100px; border: 1px solid #ccc; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+            .photo-box img { width: 100%; height: 100%; object-fit: cover; }
+      </style></head><body>
+      <div class="header"><h1>${os.placa} - ${os.modelo}</h1><p>Cliente: ${os.cliente}</p></div>
+      <h3>Histórico</h3>
+      <table><thead><tr><th>Data</th><th>Resp.</th><th>Desc.</th><th>Peças</th><th>Valor</th></tr></thead><tbody>${lines}</tbody></table>
+      <h3>Evidências</h3>
+      <div class="photos-container">${imgs}</div>
+      <script>window.print()</script></body></html>`;
+      
       const win = window.open('', '', 'width=900,height=800');
       win.document.write(html); win.document.close();
   };
@@ -559,12 +627,25 @@ document.addEventListener('DOMContentLoaded', () => {
       lb.classList.remove('hidden'); lb.classList.add('flex');
   };
 
-  // --- BOTÕES MODAIS ---
+  // --- BOTÕES MODAIS (CORREÇÃO AQUI) ---
   document.querySelectorAll('.btn-close-modal').forEach(b => b.onclick = (e) => {
-      e.target.closest('.modal').classList.add('hidden'); e.target.closest('.modal').classList.remove('flex');
-      document.getElementById('lightbox').classList.add('hidden');
+      // Fecha modal padrão
+      e.target.closest('.modal').classList.add('hidden'); 
+      e.target.closest('.modal').classList.remove('flex');
+      
+      // Fecha lightbox especificamente se estiver aberto, removendo o flex
+      const lb = document.getElementById('lightbox');
+      lb.classList.remove('flex');
+      lb.classList.add('hidden');
   });
-  document.getElementById('lightbox-close').onclick = () => document.getElementById('lightbox').classList.add('hidden');
+
+  // CORREÇÃO: Remove explicitamente a classe 'flex' ao fechar
+  document.getElementById('lightbox-close').onclick = () => {
+      const lb = document.getElementById('lightbox');
+      lb.classList.remove('flex'); // IMPORTANTE: Remove o display flex
+      lb.classList.add('hidden');  // Adiciona o hidden
+  };
+
   document.getElementById('lightbox-prev').onclick = () => { if(currentLightboxIndex>0) window.openLightbox(currentLightboxIndex-1); };
   document.getElementById('lightbox-next').onclick = () => { if(currentLightboxIndex<lightboxMedia.length-1) window.openLightbox(currentLightboxIndex+1); };
 
