@@ -15,6 +15,7 @@ const firebaseConfig = {
 
 // ESTADO GLOBAL
 let activeCloudinaryConfig = null;
+let activeCloudinaryKey = null; // Armazena a chave da config ativa para update
 let currentUser = null;
 let allServiceOrders = {};
 let allUsers = [];
@@ -28,6 +29,16 @@ const STATUS_LIST = [
     'Aguardando-Aprovacao', 'Servico-Autorizado', 'Em-Execucao', 
     'Finalizado-Aguardando-Retirada', 'Entregue' 
 ];
+
+// --- FUNÇÕES AUXILIARES ---
+function formatBytes(bytes, decimals = 2) {
+    if (!+bytes) return '0 Bytes';
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+}
 
 // --- NOTIFICAÇÕES ---
 function showNotification(message, type = 'success') {
@@ -45,10 +56,18 @@ const uploadFileToCloudinary = async (file) => {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('upload_preset', activeCloudinaryConfig.uploadPreset);
+  
   const res = await fetch(`https://api.cloudinary.com/v1_1/${activeCloudinaryConfig.cloudName}/auto/upload`, { method: 'POST', body: formData });
+  
   if (!res.ok) throw new Error('Erro ao enviar imagem.');
   const data = await res.json();
-  return { url: data.secure_url, type: data.resource_type };
+  
+  // Retorna URL, tipo e TAMANHO (bytes) para o contador
+  return { 
+      url: data.secure_url, 
+      type: data.resource_type,
+      bytes: data.bytes 
+  };
 };
 
 // --- INICIALIZAÇÃO ---
@@ -59,7 +78,18 @@ document.addEventListener('DOMContentLoaded', () => {
   // 1. CARREGAR CONFIGS
   db.ref('cloudinaryConfigs').limitToLast(1).on('value', snap => {
       const val = snap.val();
-      if(val) activeCloudinaryConfig = Object.values(val)[0];
+      if(val) {
+          const key = Object.keys(val)[0];
+          activeCloudinaryConfig = val[key];
+          activeCloudinaryKey = key;
+          
+          // Atualiza visualização no painel admin se existir
+          const infoEl = document.getElementById('activeCloudinaryInfo'); // Supondo que exista ou possa ser criado
+          if (infoEl) {
+             const usageText = activeCloudinaryConfig.usage ? ` | Enviado: ${formatBytes(activeCloudinaryConfig.usage)}` : ' | Enviado: 0 B';
+             infoEl.innerText = `Ativo: ${activeCloudinaryConfig.cloudName}${usageText}`;
+          }
+      }
   });
 
   // 2. CARREGAR USUÁRIOS
@@ -223,7 +253,8 @@ document.addEventListener('DOMContentLoaded', () => {
           cloudName: document.getElementById('cloudNameInput').value,
           uploadPreset: document.getElementById('uploadPresetInput').value,
           updatedBy: currentUser.name,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          usage: 0 // Inicia contador
       });
       showNotification('Configuração Cloudinary Salva!');
   };
@@ -736,7 +767,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
           <!-- RODAPÉ SISTEMA -->
           <div class="system-footer">
-              Sistema de Gestão Center Car Menechelli v4.5 &bull; Desenvolvido por thIAguinho Soluções &bull; ${os.id}
+              Sistema de Gestão Center Car Menechelli v4.5 &bull; Desenvolvido por thIAguinho Soluções - (17) 997631210  &bull; ${os.id}
           </div>
 
           <script>window.print()</script>
@@ -818,7 +849,18 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
           if(filesToUpload.length) {
               const res = await Promise.all(filesToUpload.map(f => uploadFileToCloudinary(f)));
-              res.forEach(r => db.ref(`serviceOrders/${id}/media`).push(r));
+              
+              // SOMAR USO
+              let totalBytes = 0;
+              res.forEach(r => {
+                  db.ref(`serviceOrders/${id}/media`).push(r);
+                  if(r.bytes) totalBytes += r.bytes;
+              });
+
+              // ATUALIZAR CONTADOR NO BANCO
+              if(totalBytes > 0 && activeCloudinaryKey) {
+                  db.ref(`cloudinaryConfigs/${activeCloudinaryKey}/usage`).transaction(curr => (curr || 0) + totalBytes);
+              }
           }
           const desc = document.getElementById('logDescricao').value;
           if(desc || document.getElementById('logValor').value) {
